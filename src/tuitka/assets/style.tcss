@@ -1,0 +1,37 @@
+.flagwidget {
+    width:1fr;
+    height:auto;
+
+    Label {
+        width: 1fr;
+        height:auto;
+    }
+
+    Switch {
+        width: 1fr;
+        height:auto;
+    }
+
+    Select {
+        width: 1fr;
+        height:auto;
+    }
+
+    Input {
+        width: 1fr;
+        height:auto;
+    }
+}
+
+Screen {
+    content-align: center middle;
+}
+
+Collapsible {
+    width: 1fr;
+}
+
+TextArea {
+    width: 1fr;
+    height: auto;
+}

@@ -1,0 +1,19 @@
+[project]
+name = "tuitka"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Zaloog", email = "gramslars@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "textual>=1.0.0",
+]
+
+[project.scripts]
+tuitka = "tuitka:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
