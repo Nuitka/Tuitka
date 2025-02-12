@@ -23,6 +23,11 @@
     }
 }
 
+.command-label {
+    width: 1fr;
+    height:auto;
+}
+
 Screen {
     content-align: center middle;
 }

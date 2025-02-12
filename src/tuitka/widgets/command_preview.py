@@ -1,4 +1,4 @@
-from textual.widgets import TextArea
+from textual.widgets import Log
 
-class CommandPreviewer(TextArea):
+class CommandPreviewer(Log):
     ...

@@ -1,20 +1,22 @@
 from pathlib import Path
 
-from textual import on
+from textual import work
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
 from textual.reactive import reactive
-from textual.widgets import Header, Footer, Button, Label, TextArea, Collapsible, Checkbox, Input, Switch
+from textual.widgets import Header, Footer, Button, Label, Collapsible
 
 from tuitka.widgets.script_input import ScriptInput
-from tuitka.widgets.command_preview import CommandPreviewer
 from tuitka.widgets.flag_widgets import ListFlag, BoolFlag, StringFlag
+from tuitka.widgets.output_logger import OutputLogger
 from tuitka.constants import OPTION_TREE
 
 class NuitkaTUI(App):
     CSS_PATH = Path('assets/style.tcss')
-    options: reactive[dict] = reactive({})
-    command: reactive[str] = reactive('nuitka')
+    # entrypoint: reactive[str] = reactive('uvx --from nuitka nuitka \\')
+    entrypoint: reactive[str] = reactive('uvx --from nuitka --with cowsay nuitka \\')
+    options: reactive[dict] = reactive({}, init=False)
+    script: reactive[str] = reactive('script.py', init=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,26 +24,7 @@ class NuitkaTUI(App):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Label("Nuitka Executable Builder", classes="title")
-        yield ScriptInput(placeholder="Enter your Python script path", id="script_path")
-
-        # import subprocess
-        # out =subprocess.run(['uvx', '--refresh', '--from','nuitka','nuitka', '--help'], text=True, capture_output=True)
-        # lines = out.stdout.splitlines()
-        # tmp_cat = ''
-        # tmp_flags = []
-        # for i, line in enumerate(lines):
-        #     if line == '':
-        #         if tmp_cat:
-        #             with Collapsible(title=tmp_cat):
-        #                 for flag in tmp_flags:
-        #                     yield Label(flag)
-        #             tmp_cat=''
-        #             tmp_flags=[]
-        #         else:
-        #             tmp_cat=lines[i+1]
-        #
-        #     if line.strip().startswith('--'):
-        #         tmp_flags.append(line.strip().split(' ')[0])
+        yield ScriptInput(value='', placeholder="Enter your Python script path", id="script_path")
 
         for category, flag_list in OPTION_TREE.items():
             with Collapsible(title=category):
@@ -56,65 +39,79 @@ class NuitkaTUI(App):
 
         
         
-        yield Label('Command Preview')
-        yield CommandPreviewer("", id="preview")
+        with Collapsible(title='Show Command Preview', collapsed=False, expanded_symbol=':eye:'):
+            yield Label(self.entrypoint, id='label-entrypoint', classes='command-label')
+            yield Label('', id='label-options', classes='command-label')
+            yield Label(self.script, id='label-script', classes='command-label')
+
         yield Horizontal(Button("Build", id="build"))
+        yield OutputLogger()
         yield Footer()
     
 
 
-    @on(Switch.Changed)
-    def update_bool_flags(self, event: Switch.Changed) -> None:
-        flag = event.switch.parent.id
-        if event.switch.value:
+    def update_bool_flags(self, flag: str, default: bool) -> None:
+        if not default:
             self.options[flag] = None
         else:
-            if flag in self.options:
-                self.options.pop(flag)
-
+            self.options.pop(flag)
         self.mutate_reactive(NuitkaTUI.options)
 
-    @on(Input.Changed)
-    def update_sting_flags(self, event: Input.Changed) -> None:
-        flag = event.input.parent.id
-        value = event.input.value
 
-        if event.input.value:
-            self.options[flag] = value
+    def update_string_flags(self, flag: str, new_value: str, default: bool ) -> None:
+        if  not default:
+            self.options[flag] = new_value
         else:
-            if flag in self.options:
-                self.options.pop(flag)
-
+            self.options.pop(flag)
         self.mutate_reactive(NuitkaTUI.options)
+
+
+    def watch_script(self):
+        self.query_one('#label-script',Label).update(self.script) 
+
 
     def watch_options(self):
-        script = self.query_one(ScriptInput).value.strip()
-        if not script:
-            script = "script.py"
 
+        # write options to preview
         option_string_list = []
         for flag, flag_values in self.options.items():
+            # Bool Flags
             if flag_values is None:
                 option_string_list.append(flag)
+            # String Flags
             if isinstance(flag_values, str):
                 option_string_list.append(f'{flag}={flag_values}')
 
 
-        self.command = f"nuitka {' '.join(option_string_list)} {script}"
+        self.query_one('#label-options',Label).update('\n'.join(f'{option} \\' for option in  option_string_list))
 
-    def watch_command(self):
-        self.query_one(CommandPreviewer).load_text(self.command)
+
+
+    def get_command(self):
+        command = '\n'.join([label.renderable for label in self.query('.command-label') if label.renderable ]) 
+        return command
+
+        # self.notify(repr(command))
+
     
     
     
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "build":
-            command = self.query_one("#preview", TextArea).text
-            self.run_command(command)
+            command = '\n'.join([label.renderable for label in self.query('.command-label') if label.renderable ]) 
+            command = command.replace('\\\n', '')
+            self.run_command(command=command)
+        
     
     def run_command(self, command: str):
         import subprocess
-        subprocess.run(command, shell=True)
+        executer = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE,  text=True)
+        for output_line in iter(executer.stdout.readline, ''):
+            self.query_one(OutputLogger).write_line(output_line)
+        executer.stdout.close()
+        return_code = executer.wait()
+        if return_code:
+            raise subprocess.CalledProcessError(return_code, command)
 
 if __name__ == "__main__":
     NuitkaTUI().run()

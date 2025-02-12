@@ -2,8 +2,10 @@ OPTION_TREE = {
     'Control the inclusion of modules and packages in result': [
         {
             'flag':'--include-package',
-            'type': 'list',
-            'default': [],
+            'type': 'string',
+            'default': '',
+            # 'type': 'list',
+            # 'default': [],
         },
         {
             'flag':'--include-modules',
@@ -13,8 +15,19 @@ OPTION_TREE = {
         {
             'flag':"--prefer-source-code",
             'type': 'bool',
-            'default': True,
-        }
+            'default': False,
+        },
+        #
+        {
+            'flag':"--onefile",
+            'type': 'bool',
+            'default': False,
+        },
+        {
+            'flag':"--run",
+            'type': 'bool',
+            'default': False,
+        },
     ],
 
     'Compilation choices': [
