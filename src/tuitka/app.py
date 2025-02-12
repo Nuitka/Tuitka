@@ -1,4 +1,5 @@
 from pathlib import Path
+import asyncio
 
 from textual import work
 from textual.app import App, ComposeResult
@@ -98,20 +99,26 @@ class NuitkaTUI(App):
     
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "build":
-            command = '\n'.join([label.renderable for label in self.query('.command-label') if label.renderable ]) 
-            command = command.replace('\\\n', '')
+            command = ''.join([label.renderable for label in self.query('.command-label') if label.renderable ]) 
+            command = command.replace('\\', '')
             self.run_command(command=command)
         
     
-    def run_command(self, command: str):
-        import subprocess
-        executer = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE,  text=True)
-        for output_line in iter(executer.stdout.readline, ''):
-            self.query_one(OutputLogger).write_line(output_line)
-        executer.stdout.close()
-        return_code = executer.wait()
-        if return_code:
-            raise subprocess.CalledProcessError(return_code, command)
+    @work(thread=True, exclusive=True)
+    async def run_command(self, command: str):
+        executer = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+
+        while True:
+            output_line = await executer.stdout.readline()
+            if not output_line:
+                break
+
+            self.query_one(OutputLogger).write_line(output_line.decode().strip())
+        executer.wait()
 
 if __name__ == "__main__":
     NuitkaTUI().run()
