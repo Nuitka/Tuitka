@@ -6,10 +6,10 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.reactive import reactive
-from textual.widgets import Header, Footer, Button, Label, Collapsible
+from textual.widgets import Header, Footer, Label
 
 from tuitka.widgets.script_input import ScriptInput
-from tuitka.widgets.flag_widgets import ListFlag, BoolFlag, StringFlag
+from tuitka.widgets.flag_widgets import ListFlag, BoolFlag, StringFlag, FlagCollapsible
 from tuitka.widgets.command_preview import CommandPreviewer
 from tuitka.widgets.output_logger import OutputLogger
 from tuitka.constants import OPTION_TREE, ENTRY_POINT_DICT
@@ -18,7 +18,12 @@ from tuitka.utils import get_entrypoint
 
 class NuitkaTUI(App):
     CSS_PATH = Path("assets/style.tcss")
-    BINDINGS = [Binding("ctrl+j", "float_preview", "Pin Preview", priority=True)]
+    BINDINGS = [
+        Binding("ctrl+l", "float_preview", "Pin Preview", priority=True),
+        Binding("ctrl+j", "focus_next_flag", "Next Flag", priority=True),
+        Binding("ctrl+k", "focus_previous_flag", "Previous Flag", priority=True),
+    ]
+
     entrypoint: reactive[str] = reactive("", init=False)
     options: reactive[dict] = reactive({}, init=False)
     script: reactive[str] = reactive("script.py", init=False)
@@ -30,7 +35,7 @@ class NuitkaTUI(App):
             yield ScriptInput()
 
             for category, flag_list in OPTION_TREE.items():
-                with Collapsible(title=category):
+                with FlagCollapsible(title=category):
                     for flag_dict in flag_list:
                         match flag_dict["type"]:
                             case "bool":
@@ -46,21 +51,6 @@ class NuitkaTUI(App):
                                     flag_dict=flag_dict, id=flag_dict["flag"]
                                 )
 
-            # with Collapsible(
-            #     title="Show Command Preview",
-            #     id="collaps-preview",
-            #     collapsed=False,
-            #     expanded_symbol=":eye:",
-            # ):
-            #     yield Label(
-            #         self.entrypoint, id="label-entrypoint", classes="command-label"
-            #     )
-            #     option_label = Label("", id="label-options", classes="command-label")
-            #     option_label.display = False
-            #     yield option_label
-            #     yield Label(self.script, id="label-script", classes="command-label")
-            #
-            # yield Button("Build", id="build", variant="success")
             yield CommandPreviewer()
             yield OutputLogger()
             yield Footer()
@@ -96,9 +86,6 @@ class NuitkaTUI(App):
             message=f"Using {self.entrypoint.split()[0]} to build your executable",
         )
 
-    def watch_script(self):
-        self.query_one("#label-script", Label).update(self.script)
-
     def watch_options(self):
         # write options to preview label
         option_string_list = []
@@ -120,30 +107,40 @@ class NuitkaTUI(App):
         else:
             self.query_one("#label-options", Label).display = True
 
-    def get_command(self) -> str:
-        command = "\n".join(
-            [
-                label.renderable
-                for label in self.query(".command-label")
-                if label.renderable
-            ]
-        )
-        return command
-
-    def on_button_pressed(self, event: Button.Pressed):
-        if event.button.id == "build":
-            command = "\n".join(
-                [
-                    label.renderable
-                    for label in self.query(".command-label")
-                    if label.renderable
-                ]
-            )
-            command = command.replace("\\\n", "")
-            self.run_command(command=command)
+    def watch_script(self):
+        self.query_one("#label-script", Label).update(self.script)
 
     def action_float_preview(self):
         self.query_one(CommandPreviewer).toggle_class("preview")
+
+    def action_focus_previous_flag(self):
+        # Handle movement from first to last category
+        if self.focused.parent.has_class("flagwidget"):
+            first_focused = self.focused.parent.parent.parent._contents_list.index(
+                self.focused.parent
+            )
+            if first_focused == 0:
+                self.action_focus_previous()
+
+        self.action_focus_previous()
+        if isinstance(self.focused.parent, FlagCollapsible):
+            # focus the last flag widget
+            try:
+                self.focused.parent._contents_list[-1].children[-1].focus()
+            except AttributeError:
+                self.action_focus_previous_flag()
+            return
+        if not self.focused.parent.has_class("flagwidget"):
+            self.action_focus_previous_flag()
+
+    def action_focus_next_flag(self):
+        self.action_focus_next()
+        if isinstance(self.focused.parent, FlagCollapsible):
+            # focus the first flag widget
+            self.focused.parent._contents_list[0].children[-1].focus()
+            return
+        if not self.focused.parent.has_class("flagwidget"):
+            self.action_focus_next_flag()
 
     @work(thread=True, exclusive=True)
     async def run_command(self, command: str):

@@ -47,3 +47,15 @@ class CommandPreviewer(Vertical):
         yield Button("Build", id="build", variant="success")
 
         return super().compose()
+
+    def on_button_pressed(self, event: Button.Pressed):
+        if event.button.id == "build":
+            command = "\n".join(
+                [
+                    label.renderable
+                    for label in self.query(".command-label")
+                    if label.renderable
+                ]
+            )
+            command = command.replace("\\\n", "")
+            self.app.run_command(command=command)

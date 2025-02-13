@@ -6,7 +6,15 @@ if TYPE_CHECKING:
 
 from textual.app import ComposeResult
 from textual.containers import Horizontal
-from textual.widgets import Label, Switch, Select, Input
+from textual.widgets import Label, Switch, Select, Input, Collapsible
+
+
+class FlagCollapsible(Collapsible):
+    def on_descendant_focus(self):
+        self.collapsed = False
+
+    def on_descendant_blur(self):
+        self.collapsed = True
 
 
 class BoolFlag(Horizontal):
