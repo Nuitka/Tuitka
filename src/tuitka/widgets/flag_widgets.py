@@ -32,9 +32,15 @@ class BoolFlag(Horizontal):
         return super().compose()
 
     def on_switch_changed(self, event: Switch.Changed):
+        flag = self.id
         new_value = event.switch.value
         is_default = new_value == self.flag_dict.get("default")
-        self.app.update_bool_flags(flag=self.id, default=is_default)
+
+        if not is_default:
+            self.app.options[flag] = None
+        else:
+            self.app.options.pop(flag)
+        self.app.update_options()
 
 
 class StringFlag(Horizontal):
@@ -51,11 +57,15 @@ class StringFlag(Horizontal):
         return super().compose()
 
     def on_input_changed(self, event: Input.Changed):
+        flag = self.id
         new_value = event.input.value
         is_default = new_value == self.flag_dict["default"]
-        self.app.update_string_flags(
-            flag=self.id, new_value=new_value, default=is_default
-        )
+
+        if not is_default:
+            self.app.options[flag] = new_value
+        else:
+            self.app.options.pop(flag)
+        self.app.update_options()
 
 
 class SelectionFlag(Horizontal):
@@ -77,12 +87,16 @@ class SelectionFlag(Horizontal):
         return super().compose()
 
     def on_select_changed(self, event: Select.Changed):
-        event.stop()
+        # event.stop()
+        flag = self.id
         new_value = event.select.value
         is_default = new_value == self.flag_dict["default"]
-        self.app.update_selection_flags(
-            flag=self.id, new_value=new_value, default=is_default
-        )
+
+        if not is_default:
+            self.app.options[flag] = new_value
+        else:
+            self.app.options.pop(flag)
+        self.app.update_options()
 
 
 class ListFlag(Horizontal):

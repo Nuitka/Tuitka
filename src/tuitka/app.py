@@ -75,25 +75,7 @@ class NuitkaTUI(App):
 
         self.entrypoint = ENTRY_POINT_DICT.get(executable)
 
-    def update_bool_flags(self, flag: str, default: bool) -> None:
-        if not default:
-            self.options[flag] = None
-        else:
-            self.options.pop(flag)
-        self.mutate_reactive(NuitkaTUI.options)
-
-    def update_string_flags(self, flag: str, new_value: str, default: bool) -> None:
-        if not default:
-            self.options[flag] = new_value
-        else:
-            self.options.pop(flag)
-        self.mutate_reactive(NuitkaTUI.options)
-
-    def update_selection_flags(self, flag: str, new_value: str, default: bool) -> None:
-        if not default:
-            self.options[flag] = new_value
-        else:
-            self.options.pop(flag)
+    def update_options(self):
         self.mutate_reactive(NuitkaTUI.options)
 
     def watch_entrypoint(self):
