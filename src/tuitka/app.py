@@ -45,21 +45,13 @@ class NuitkaTUI(App):
                     for flag_dict in flag_list:
                         match flag_dict["type"]:
                             case "bool":
-                                yield BoolFlag(
-                                    flag_dict=flag_dict, id=flag_dict["flag"]
-                                )
+                                yield BoolFlag(flag_dict=flag_dict)
                             case "string":
-                                yield StringFlag(
-                                    flag_dict=flag_dict, id=flag_dict["flag"]
-                                )
+                                yield StringFlag(flag_dict=flag_dict)
                             case "list":
-                                yield ListFlag(
-                                    flag_dict=flag_dict, id=flag_dict["flag"]
-                                )
+                                yield ListFlag(flag_dict=flag_dict)
                             case "selection":
-                                yield SelectionFlag(
-                                    flag_dict=flag_dict, id=flag_dict["flag"]
-                                )
+                                yield SelectionFlag(flag_dict=flag_dict)
 
             yield CommandPreviewer()
             yield OutputLogger()

@@ -25,6 +25,7 @@ class BoolFlag(Horizontal):
         self.flag_dict = flag_dict
         super().__init__(*args, **kwargs)
         self.classes = "flagwidget"
+        self.id = flag_dict["flag"]
 
     def compose(self) -> ComposeResult:
         yield Label(self.flag_dict["flag"])
@@ -50,6 +51,7 @@ class StringFlag(Horizontal):
         self.flag_dict = flag_dict
         super().__init__(*args, **kwargs)
         self.classes = "flagwidget"
+        self.id = flag_dict["flag"]
 
     def compose(self) -> ComposeResult:
         yield Label(self.flag_dict["flag"])
@@ -75,6 +77,7 @@ class SelectionFlag(Horizontal):
         self.flag_dict = flag_dict
         super().__init__(*args, **kwargs)
         self.classes = "flagwidget"
+        self.id = flag_dict["flag"]
 
     def compose(self) -> ComposeResult:
         yield Label(self.flag_dict["flag"])
@@ -87,7 +90,6 @@ class SelectionFlag(Horizontal):
         return super().compose()
 
     def on_select_changed(self, event: Select.Changed):
-        # event.stop()
         flag = self.id
         new_value = event.select.value
         is_default = new_value == self.flag_dict["default"]
@@ -106,6 +108,7 @@ class ListFlag(Horizontal):
         self.flag_dict = flag_dict
         super().__init__(*args, **kwargs)
         self.classes = "flagwidget"
+        self.id = flag_dict["flag"]
 
     def compose(self) -> ComposeResult:
         yield Label(self.flag_dict["flag"])
