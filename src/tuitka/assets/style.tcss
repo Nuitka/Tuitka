@@ -26,6 +26,13 @@
 .command-label {
     width: 1fr;
     height:auto;
+
+}
+
+*.preview {
+    dock: top;
+    width: 1fr;
+    height: auto;
 }
 
 Screen {
