@@ -38,8 +38,8 @@ OPTION_TREE: dict[str, list[dict]] = {
     "Compilation choices": [
         {
             "flag": "--file-reference-choice",
-            "type": "list",
-            "default": [],
+            "type": "selection",
+            "default": "runtime",
             "choices": ["original", "runtime", "frozen"],
         },
     ],

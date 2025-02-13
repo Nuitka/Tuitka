@@ -9,7 +9,13 @@ from textual.reactive import reactive
 from textual.widgets import Header, Footer, Label
 
 from tuitka.widgets.script_input import ScriptInput
-from tuitka.widgets.flag_widgets import ListFlag, BoolFlag, StringFlag, FlagCollapsible
+from tuitka.widgets.flag_widgets import (
+    ListFlag,
+    BoolFlag,
+    StringFlag,
+    SelectionFlag,
+    FlagCollapsible,
+)
 from tuitka.widgets.command_preview import CommandPreviewer
 from tuitka.widgets.output_logger import OutputLogger
 from tuitka.constants import OPTION_TREE, ENTRY_POINT_DICT
@@ -50,6 +56,10 @@ class NuitkaTUI(App):
                                 yield ListFlag(
                                     flag_dict=flag_dict, id=flag_dict["flag"]
                                 )
+                            case "selection":
+                                yield SelectionFlag(
+                                    flag_dict=flag_dict, id=flag_dict["flag"]
+                                )
 
             yield CommandPreviewer()
             yield OutputLogger()
@@ -73,6 +83,13 @@ class NuitkaTUI(App):
         self.mutate_reactive(NuitkaTUI.options)
 
     def update_string_flags(self, flag: str, new_value: str, default: bool) -> None:
+        if not default:
+            self.options[flag] = new_value
+        else:
+            self.options.pop(flag)
+        self.mutate_reactive(NuitkaTUI.options)
+
+    def update_selection_flags(self, flag: str, new_value: str, default: bool) -> None:
         if not default:
             self.options[flag] = new_value
         else:
