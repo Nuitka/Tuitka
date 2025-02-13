@@ -28,11 +28,28 @@
     height:auto;
 
 }
-
-*.preview {
-    dock: top;
+CommandPreviewer {
     width: 1fr;
-    height: auto;
+    height:auto;
+
+    VerticalScroll {
+        height: auto;
+        max-height: 8;
+        background:darkblue;
+    }
+    Label {
+        width: 1fr;
+        background:darkblue;
+    }
+    Button {
+        width: 1fr;
+    }
+
+    &.preview {
+        dock: top;
+        width: 1fr;
+        height: auto;
+    }
 }
 
 Screen {
@@ -41,9 +58,4 @@ Screen {
 
 Collapsible {
     width: 1fr;
-}
-
-TextArea {
-    width: 1fr;
-    height: auto;
 }

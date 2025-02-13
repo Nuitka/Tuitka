@@ -1,3 +1,4 @@
+DEFAULT_SCRIPT_NAME = "script.py"
 ENTRY_POINT_DICT = {
     "nuitka": "nuitka \\",
     "uvx": "uvx --from nuitka nuitka \\",

@@ -10,6 +10,7 @@ from textual.widgets import Header, Footer, Button, Label, Collapsible
 
 from tuitka.widgets.script_input import ScriptInput
 from tuitka.widgets.flag_widgets import ListFlag, BoolFlag, StringFlag
+from tuitka.widgets.command_preview import CommandPreviewer
 from tuitka.widgets.output_logger import OutputLogger
 from tuitka.constants import OPTION_TREE, ENTRY_POINT_DICT
 from tuitka.utils import get_entrypoint
@@ -17,7 +18,7 @@ from tuitka.utils import get_entrypoint
 
 class NuitkaTUI(App):
     CSS_PATH = Path("assets/style.tcss")
-    BINDINGS = [Binding("space", "float_preview", "Preview", priority=True)]
+    BINDINGS = [Binding("ctrl+j", "float_preview", "Pin Preview", priority=True)]
     entrypoint: reactive[str] = reactive("", init=False)
     options: reactive[dict] = reactive({}, init=False)
     script: reactive[str] = reactive("script.py", init=False)
@@ -26,9 +27,7 @@ class NuitkaTUI(App):
         with VerticalScroll():
             yield Header()
             yield Label("Nuitka Executable Builder", classes="title")
-            yield ScriptInput(
-                value="", placeholder="Enter your Python script path", id="script_path"
-            )
+            yield ScriptInput()
 
             for category, flag_list in OPTION_TREE.items():
                 with Collapsible(title=category):
@@ -47,21 +46,22 @@ class NuitkaTUI(App):
                                     flag_dict=flag_dict, id=flag_dict["flag"]
                                 )
 
-            with Collapsible(
-                title="Show Command Preview",
-                id="collaps-preview",
-                collapsed=False,
-                expanded_symbol=":eye:",
-            ):
-                yield Label(
-                    self.entrypoint, id="label-entrypoint", classes="command-label"
-                )
-                option_label = Label("", id="label-options", classes="command-label")
-                option_label.display = False
-                yield option_label
-                yield Label(self.script, id="label-script", classes="command-label")
-
-            yield Button("Build", id="build", variant="success")
+            # with Collapsible(
+            #     title="Show Command Preview",
+            #     id="collaps-preview",
+            #     collapsed=False,
+            #     expanded_symbol=":eye:",
+            # ):
+            #     yield Label(
+            #         self.entrypoint, id="label-entrypoint", classes="command-label"
+            #     )
+            #     option_label = Label("", id="label-options", classes="command-label")
+            #     option_label.display = False
+            #     yield option_label
+            #     yield Label(self.script, id="label-script", classes="command-label")
+            #
+            # yield Button("Build", id="build", variant="success")
+            yield CommandPreviewer()
             yield OutputLogger()
             yield Footer()
 
@@ -100,7 +100,7 @@ class NuitkaTUI(App):
         self.query_one("#label-script", Label).update(self.script)
 
     def watch_options(self):
-        # write options to preview
+        # write options to preview label
         option_string_list = []
         for flag, flag_values in self.options.items():
             # Bool Flags
@@ -120,7 +120,7 @@ class NuitkaTUI(App):
         else:
             self.query_one("#label-options", Label).display = True
 
-    def get_command(self):
+    def get_command(self) -> str:
         command = "\n".join(
             [
                 label.renderable
@@ -130,7 +130,7 @@ class NuitkaTUI(App):
         )
         return command
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "build":
             command = "\n".join(
                 [
@@ -143,8 +143,7 @@ class NuitkaTUI(App):
             self.run_command(command=command)
 
     def action_float_preview(self):
-        self.query_one("#collaps-preview").toggle_class("preview")
-        self.query_one(Button).toggle_class("preview")
+        self.query_one(CommandPreviewer).toggle_class("preview")
 
     @work(thread=True, exclusive=True)
     async def run_command(self, command: str):
@@ -161,7 +160,3 @@ class NuitkaTUI(App):
 
             self.query_one(OutputLogger).write_line(output_line.decode().strip())
         # executer.wait()
-
-
-if __name__ == "__main__":
-    NuitkaTUI().run()

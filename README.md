@@ -9,7 +9,5 @@
 
 - command Preview
     - highlight flags?
-    - enable/disable read_only
-    - How to handle default bools? Or values in general
 
 - log for output/progress

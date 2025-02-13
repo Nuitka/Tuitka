@@ -22,6 +22,3 @@ def get_entrypoint():
 
 
 def get_py_files_for_suggester(): ...
-
-
-def execute_compiler_command(): ...
