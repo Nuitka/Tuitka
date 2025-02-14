@@ -79,7 +79,7 @@ class StringFlag(Horizontal):
 class SelectionFlag(Horizontal):
     app: "NuitkaTUI"
 
-    def __init__(self, flag_dict: dict[str, str | list], *args, **kwargs) -> None:
+    def __init__(self, flag_dict: dict[str, list], *args, **kwargs) -> None:
         self.flag_dict = flag_dict
         super().__init__(*args, **kwargs)
         self.classes = "flagwidget"
@@ -110,7 +110,7 @@ class SelectionFlag(Horizontal):
 class ListFlag(Horizontal):
     app: "NuitkaTUI"
 
-    def __init__(self, flag_dict: dict[str, str | list], *args, **kwargs) -> None:
+    def __init__(self, flag_dict: dict[str, list], *args, **kwargs) -> None:
         self.flag_dict = flag_dict
         super().__init__(*args, **kwargs)
         self.classes = "flagwidget"
