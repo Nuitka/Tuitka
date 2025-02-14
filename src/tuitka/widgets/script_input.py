@@ -16,6 +16,9 @@ class ScriptInput(Input):
         self.value = ""
         self.placeholder = "Enter your Python script path"
 
+    def on_mount(self):
+        self.focus()
+
     def on_input_changed(self, event: Input.Changed) -> None:
         self.app.script = self.value.strip()
         if not self.value:
