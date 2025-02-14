@@ -23,7 +23,7 @@ OPTION_TREE: dict[str, list[dict]] = {
             "type": "bool",
             "default": False,
         },
-        #
+        # Wrong Category, just here to test
         {
             "flag": "--onefile",
             "type": "bool",

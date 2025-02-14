@@ -8,6 +8,8 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import Label, Switch, Select, Input, Collapsible
 
+from textual.widgets._collapsible import CollapsibleTitle
+
 
 class FlagCollapsible(Collapsible):
     def on_descendant_focus(self):
@@ -16,6 +18,10 @@ class FlagCollapsible(Collapsible):
     def on_descendant_blur(self):
         if not self.has_focus_within:
             self.collapsed = True
+
+    def _on_collapsible_title_toggle(self, event: CollapsibleTitle.Toggle) -> None:
+        event.stop()
+        self.collapsed = not self.collapsed
 
 
 class BoolFlag(Horizontal):
