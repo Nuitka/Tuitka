@@ -5,7 +5,12 @@
     - Suggest .py Files?
 
 - collapsible Option Categories
-    - Custom Flag Widgets Based on bool/value/options
+    - Custom Flag Widgets Based on
+        - bool
+        - string
+        - list
+        - selection
+        - Pathlike extra to string?
 
 - command Preview
     - highlight flags?

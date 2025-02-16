@@ -2,6 +2,11 @@
     width:1fr;
     height:auto;
 
+    Horizontal {
+        width: 1fr;
+        height:auto;
+    }
+
     Label {
         width: 1fr;
         height:auto;
@@ -58,4 +63,9 @@ Screen {
 
 Collapsible {
     width: 1fr;
+}
+
+Rule {
+    margin: 0;
+    color: black;
 }
