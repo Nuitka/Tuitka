@@ -27,40 +27,53 @@ class FlagCollapsible(Collapsible):
 
 class BoolFlag(Vertical):
     app: "NuitkaTUI"
+    flag: reactive[str] = reactive("", init=False)
+    flag_value: reactive[str] = reactive("", init=False)
+    complete_flag: reactive[str | None] = reactive(None, init=False)
 
     def __init__(self, flag_dict: dict[str, str | bool], *args, **kwargs) -> None:
         self.flag_dict = flag_dict
         super().__init__(*args, **kwargs)
         self.classes = "flagwidget"
-        self.id = flag_dict["flag"]
+        self.flag = flag_dict["flag"]
+        self.flag_value = flag_dict["default"]
 
     def compose(self) -> ComposeResult:
         with Horizontal():
             yield Label(self.flag_dict["flag"])
-            yield Switch(value=self.flag_dict.get("default"))
+            yield Switch(value=self.flag_dict["default"])
         yield Rule()
         return super().compose()
 
     def on_switch_changed(self, event: Switch.Changed):
-        flag = self.id
-        new_value = event.switch.value
-        is_default = new_value == self.flag_dict.get("default")
+        self.flag_value = event.switch.value
 
-        if not is_default:
-            self.app.options[flag] = None
+    def watch_flag_value(self):
+        if self.flag_value == self.flag_dict["default"]:
+            self.complete_flag = None
         else:
-            self.app.options.pop(flag)
+            self.complete_flag = f"{self.flag}"
+
+    def watch_complete_flag(self):
+        if self.complete_flag is None:
+            self.app.options.pop(self.flag)
+        else:
+            self.app.options[self.flag] = self.complete_flag
         self.app.update_options()
 
 
 class StringFlag(Vertical):
     app: "NuitkaTUI"
+    flag: reactive[str] = reactive("", init=False)
+    flag_value: reactive[str] = reactive("", init=False)
+    complete_flag: reactive[str | None] = reactive(None, init=False)
 
     def __init__(self, flag_dict: dict[str, str], *args, **kwargs) -> None:
         self.flag_dict = flag_dict
         super().__init__(*args, **kwargs)
         self.classes = "flagwidget"
-        self.id = flag_dict["flag"]
+        self.flag = flag_dict["flag"]
+        self.flag_value = flag_dict["default"]
 
     def compose(self) -> ComposeResult:
         with Horizontal():
@@ -70,25 +83,34 @@ class StringFlag(Vertical):
         return super().compose()
 
     def on_input_changed(self, event: Input.Changed):
-        flag = self.id
-        new_value = event.input.value
-        is_default = new_value == self.flag_dict["default"]
+        self.flag_value = event.input.value
 
-        if not is_default:
-            self.app.options[flag] = new_value
+    def watch_flag_value(self):
+        if self.flag_value == self.flag_dict["default"]:
+            self.complete_flag = None
         else:
-            self.app.options.pop(flag)
+            self.complete_flag = f"{self.flag}={self.flag_value}"
+
+    def watch_complete_flag(self):
+        if self.complete_flag is None:
+            self.app.options.pop(self.flag)
+        else:
+            self.app.options[self.flag] = self.complete_flag
         self.app.update_options()
 
 
 class SelectionFlag(Vertical):
     app: "NuitkaTUI"
+    flag: reactive[str] = reactive("", init=False)
+    flag_value: reactive[str] = reactive("", init=False)
+    complete_flag: reactive[str | None] = reactive(None, init=False)
 
     def __init__(self, flag_dict: dict[str, list], *args, **kwargs) -> None:
         self.flag_dict = flag_dict
         super().__init__(*args, **kwargs)
         self.classes = "flagwidget"
-        self.id = flag_dict["flag"]
+        self.flag = flag_dict["flag"]
+        self.flag_value = flag_dict["default"]
 
     def compose(self) -> ComposeResult:
         with Horizontal():
@@ -103,22 +125,27 @@ class SelectionFlag(Vertical):
         return super().compose()
 
     def on_select_changed(self, event: Select.Changed):
-        flag = self.id
-        new_value = event.select.value
-        is_default = new_value == self.flag_dict["default"]
+        self.flag_value = event.select.value
 
-        if not is_default:
-            self.app.options[flag] = new_value
+    def watch_flag_value(self):
+        if self.flag_value == self.flag_dict["default"]:
+            self.complete_flag = None
         else:
-            self.app.options.pop(flag)
+            self.complete_flag = f"{self.flag}={self.flag_value}"
+
+    def watch_complete_flag(self):
+        if self.complete_flag is None:
+            self.app.options.pop(self.flag)
+        else:
+            self.app.options[self.flag] = self.complete_flag
         self.app.update_options()
 
 
 class ListFlag(Vertical):
     app: "NuitkaTUI"
-    flag: reactive[str] = reactive("")
-    flag_value: reactive[str] = reactive("")
-    complete_flag: reactive[str] = reactive("")
+    flag: reactive[str] = reactive("", init=False)
+    flag_value: reactive[str] = reactive("", init=False)
+    complete_flag: reactive[str | None] = reactive(None, init=False)
 
     def __init__(self, flag_dict: dict[str, list], *args, **kwargs) -> None:
         self.flag_dict = flag_dict

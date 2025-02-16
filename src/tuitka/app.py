@@ -80,17 +80,18 @@ class NuitkaTUI(App):
     def watch_options(self):
         # write options to preview label
         option_string_list = []
-        for flag, flag_values in self.options.items():
+        for flag, complete_flag in self.options.items():
             # Bool Flags
-            if flag_values is None:
-                option_string_list.append(flag)
+            if complete_flag is None:
+                continue
             # String Flags
-            if isinstance(flag_values, str):
-                option_string_list.append(f"{flag}={flag_values}")
+            if isinstance(complete_flag, str):
+                option_string_list.append(complete_flag)
 
-        self.query_one("#label-options", Label).update(
-            "\n".join(f"{option} \\" for option in option_string_list)
-        )
+        if option_string_list:
+            self.query_one("#label-options", Label).update(
+                "\n".join(f"{option} \\" for option in option_string_list)
+            )
 
         # hide option-label if no options selected
         if not self.options:
