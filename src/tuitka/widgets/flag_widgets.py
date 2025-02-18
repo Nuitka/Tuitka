@@ -8,7 +8,7 @@ from textual import on
 from textual.reactive import reactive
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Label, Switch, Select, Input, Collapsible, Rule
+from textual.widgets import Label, Switch, Select, Input, Collapsible, Rule, DataTable
 
 from textual.widgets._collapsible import CollapsibleTitle
 
@@ -23,6 +23,7 @@ class FlagCollapsible(Collapsible):
     @on(Switch.Changed)
     @on(Input.Changed)
     @on(Select.Changed)
+    @on(DataTable.RowSelected)
     def update_amount(self):
         self.amount_changed = sum(
             [widget.was_changed for widget in self._contents_list if widget.was_changed]
@@ -194,7 +195,7 @@ class SelectionFlag(Vertical):
 class ListFlag(Vertical):
     app: "NuitkaTUI"
     flag: reactive[str] = reactive("", init=False)
-    flag_value: reactive[str] = reactive("", init=False)
+    flag_value: reactive[list] = reactive([], init=False)
     complete_flag: reactive[str | None] = reactive(None, init=False)
     was_changed: reactive[bool] = reactive(False, init=False)
 
@@ -208,10 +209,52 @@ class ListFlag(Vertical):
     def compose(self) -> ComposeResult:
         with Horizontal():
             yield Label(self.flag_dict["flag"])
-            yield Select(
-                (choice, choice) for choice in self.flag_dict.get("choices", [])
-            )
+            yield Input()
+        self.list_table = DataTable(cursor_type="row", show_header=False)
+        self.list_table.add_column("option", key="option")
+        self.list_table.add_column("remove", key="remove")
+        yield self.list_table
         yield Rule()
         return super().compose()
 
-    def watch_flag_value(self, new_flag_value): ...
+    def on_input_submitted(self, event: Input.Submitted):
+        new_value = event.input.value.strip()
+        if new_value:
+            self.list_table.add_row(
+                new_value,
+                ":cross_mark: click/select row to remove value",
+                key=new_value,
+            )
+            event.input.clear()
+            self.flag_value.append(new_value)
+            self.mutate_reactive(ListFlag.flag_value)
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected):
+        self.flag_value.remove(event.row_key)
+        self.list_table.remove_row(event.row_key)
+        self.mutate_reactive(ListFlag.flag_value)
+
+    def watch_flag_value(self):
+        self.notify(f"{self.flag_value}")
+        if self.flag_value == self.flag_dict["default"]:
+            self.complete_flag = None
+        else:
+            if len(self.flag_value) == 1:
+                self.complete_flag = f"{self.flag}={self.flag_value[0]}"
+            else:
+                self.complete_flag = f'{self.flag}="{",".join(self.flag_value)}"'
+
+    def watch_was_changed(self):
+        if self.was_changed:
+            self.query_one(Label).update(f"[green]{self.flag}[/]")
+        else:
+            self.query_one(Label).update(self.flag)
+
+    def watch_complete_flag(self):
+        if self.complete_flag is None:
+            self.app.options.pop(self.flag)
+            self.was_changed = False
+        else:
+            self.app.options[self.flag] = self.complete_flag
+            self.was_changed = True
+        self.app.update_options()

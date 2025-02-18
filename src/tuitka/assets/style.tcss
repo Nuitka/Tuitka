@@ -69,3 +69,7 @@ Rule {
     margin: 0;
     color: black;
 }
+
+DataTable {
+    width: 0.5fr;
+}

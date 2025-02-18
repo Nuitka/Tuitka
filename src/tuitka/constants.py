@@ -8,10 +8,8 @@ INCLUDE_GROUP = {
     "Control the inclusion of modules and packages in result": [
         {
             "flag": "--include-package",
-            "type": "string",
-            "default": "",
-            # 'type': 'list',
-            # 'default': [],
+            "type": "list",
+            "default": [],
         },
         {
             "flag": "--include-modules",
