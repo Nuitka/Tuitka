@@ -195,7 +195,7 @@ class SelectionFlag(Vertical):
 class ListFlag(Vertical):
     app: "NuitkaTUI"
     flag: reactive[str] = reactive("", init=False)
-    flag_value: reactive[list] = reactive([], init=False)
+    flag_value: reactive[list] = reactive(list, init=False)
     complete_flag: reactive[str | None] = reactive(None, init=False)
     was_changed: reactive[bool] = reactive(False, init=False)
 
@@ -213,6 +213,8 @@ class ListFlag(Vertical):
         self.list_table = DataTable(cursor_type="row", show_header=False)
         self.list_table.add_column("option", key="option")
         self.list_table.add_column("remove", key="remove")
+        self.list_table.disabled = True
+
         yield self.list_table
         yield Rule()
         return super().compose()
@@ -235,7 +237,6 @@ class ListFlag(Vertical):
         self.mutate_reactive(ListFlag.flag_value)
 
     def watch_flag_value(self):
-        self.notify(f"{self.flag_value}")
         if self.flag_value == self.flag_dict["default"]:
             self.complete_flag = None
         else:
@@ -249,6 +250,8 @@ class ListFlag(Vertical):
             self.query_one(Label).update(f"[green]{self.flag}[/]")
         else:
             self.query_one(Label).update(self.flag)
+            self.query_one(Input).focus()
+        self.list_table.disabled = not self.was_changed
 
     def watch_complete_flag(self):
         if self.complete_flag is None:

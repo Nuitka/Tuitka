@@ -74,7 +74,7 @@ class NuitkaTUI(App):
         self.query_one("#label-entrypoint", Label).update(self.entrypoint)
         self.notify(
             title="Entrypoint detected",
-            message=f"Using {self.entrypoint.split()[0]} to build your executable",
+            message=f"Using [yellow]{self.entrypoint.split()[0]}[/] to build your executable",
         )
 
     def watch_options(self):
