@@ -1,3 +1,6 @@
+from pathlib import Path
+
+LOGO_PATH = Path(__file__).parent / "assets/logo/Nuitka-Logo-Symbol.png"
 DEFAULT_SCRIPT_NAME = "script.py"
 ENTRY_POINT_DICT = {
     "nuitka": "nuitka \\",

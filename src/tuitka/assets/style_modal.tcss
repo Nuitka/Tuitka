@@ -1,0 +1,15 @@
+ModalScreen {
+    width: 60%;
+    height: auto;
+    align: center middle;
+
+    Label {
+        width: auto;
+        height: auto;
+    }
+
+    Static {
+        width: 60%;
+        content-align: center middle;
+    }
+}

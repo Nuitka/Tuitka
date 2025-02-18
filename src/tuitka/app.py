@@ -16,6 +16,7 @@ from tuitka.widgets.flag_widgets import (
     SelectionFlag,
     FlagCollapsible,
 )
+from tuitka.widgets.modals import SplashScreen
 from tuitka.widgets.command_preview import CommandPreviewer
 from tuitka.widgets.output_logger import OutputLogger
 from tuitka.constants import OPTION_TREE, ENTRY_POINT_DICT
@@ -59,6 +60,7 @@ class NuitkaTUI(App):
 
     def on_mount(self):
         self.look_for_entrypoint()
+        self.push_screen(SplashScreen())
 
     def look_for_entrypoint(self):
         executable = get_entrypoint()
