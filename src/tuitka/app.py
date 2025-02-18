@@ -26,8 +26,8 @@ class NuitkaTUI(App):
     CSS_PATH = Path("assets/style.tcss")
     BINDINGS = [
         Binding("ctrl+l", "float_preview", "Pin Preview", priority=True),
-        Binding("ctrl+j", "focus_next_flag", "Next Flag", priority=True),
-        Binding("ctrl+k", "focus_previous_flag", "Previous Flag", priority=True),
+        Binding("ctrl+j", "focus_next_flag", "Next category", priority=True),
+        Binding("ctrl+k", "focus_previous_flag", "Previous category", priority=True),
     ]
 
     entrypoint: reactive[str] = reactive("", init=False)
