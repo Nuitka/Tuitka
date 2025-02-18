@@ -11,5 +11,7 @@ ModalScreen {
     Static {
         width: 60%;
         content-align: center middle;
+        text-align: center;
+        background: #346c9c;
     }
 }

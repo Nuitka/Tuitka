@@ -7,7 +7,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Label, Static
 from rich_pixels import Pixels
 
-from tuitka.constants import LOGO_PATH
+from tuitka.constants import LOGO_PATH, SPLASHSCREEN_TEXT
 
 
 class SplashScreen(ModalScreen):
@@ -16,6 +16,7 @@ class SplashScreen(ModalScreen):
     def compose(self) -> ComposeResult:
         yield Label("Nuitka")
         yield Static(id="static-image")
+        yield Static(SPLASHSCREEN_TEXT)
 
         return super().compose()
 
