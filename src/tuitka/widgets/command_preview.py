@@ -1,10 +1,12 @@
 from typing import TYPE_CHECKING
+# from signal import SIGINT
 
 if TYPE_CHECKING:
     from tuitka.app import NuitkaTUI
 
+from textual import on
 from textual.app import ComposeResult
-from textual.containers import Vertical, VerticalScroll
+from textual.containers import Vertical, VerticalScroll, Horizontal
 from textual.widgets import Label, Button
 
 
@@ -44,18 +46,29 @@ class CommandPreviewer(Vertical):
             yield OptionsLabel()
             yield ScriptLabel()
 
-        yield Button("Build", id="build", variant="success")
+        with Horizontal():
+            yield Button("Build", variant="success", id="btn-execute")
+            yield Button("Cancel", variant="error", id="btn-cancel", disabled=True)
 
         return super().compose()
 
-    def on_button_pressed(self, event: Button.Pressed):
-        if event.button.id == "build":
-            command = "\n".join(
-                [
-                    label.renderable
-                    for label in self.query(".command-label")
-                    if label.renderable
-                ]
-            )
-            command = command.replace("\\\n", "")
-            self.app.run_command(command=command)
+    @on(Button.Pressed, "#btn-execute")
+    def action_execute_command(self):
+        self.app.query_one(VerticalScroll).scroll_end(animate=False)
+        command = "\n".join(
+            [
+                label.renderable
+                for label in self.query(".command-label")
+                if label.renderable
+            ]
+        )
+        command = command.replace("\\\n", "")
+        self.app.run_command(command=command)
+
+    @on(Button.Pressed, "#btn-cancel")
+    def action_cancel_command(self):
+        self.notify("test cancel")
+        # self.app.executer.send_signal(SIGINT)
+        self.app.executer.terminate()
+        self.app.workers.cancel_all()
+        self.app.executer = None

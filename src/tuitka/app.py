@@ -6,7 +6,8 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.reactive import reactive
-from textual.widgets import Header, Footer, Label
+from textual.widgets import Header, Footer, Label, Button
+from textual.worker import Worker, WorkerState
 
 from tuitka.widgets.script_input import ScriptInput
 from tuitka.widgets.flag_widgets import (
@@ -36,8 +37,8 @@ class NuitkaTUI(App):
     script: reactive[str] = reactive("script.py", init=False)
 
     def compose(self) -> ComposeResult:
+        yield Header()
         with VerticalScroll():
-            yield Header()
             yield Label("Nuitka Executable Builder", classes="title")
             yield ScriptInput()
 
@@ -56,7 +57,7 @@ class NuitkaTUI(App):
 
             yield CommandPreviewer()
             yield OutputLogger()
-            yield Footer()
+        yield Footer()
 
     def on_mount(self):
         self.look_for_entrypoint()
@@ -138,16 +139,35 @@ class NuitkaTUI(App):
 
     @work(thread=True, exclusive=True)
     async def run_command(self, command: str):
-        executer = await asyncio.create_subprocess_shell(
+        self.call_from_thread(self.query_one(OutputLogger).clear)
+        self.executer = await asyncio.create_subprocess_shell(
             command,
+            # 'zsh test.zsh',
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
 
         while True:
-            if executer.stdout is None:
+            if self.executer.returncode is not None:
                 break
-            output_line = await executer.stdout.readline()
+            if self.executer.stdout is None:
+                break
+            output_line = await self.executer.stdout.readline()
 
-            self.query_one(OutputLogger).write_line(output_line.decode().strip())
-        # executer.wait()
+            self.call_from_thread(
+                self.query_one(OutputLogger).write_line, output_line.decode().strip()
+            )
+            self.call_from_thread(self.query_one(VerticalScroll).scroll_end)
+
+        self.call_from_thread(self.query_one(OutputLogger).write_line, "COMPLETED")
+        # self.executer.wait()
+
+    def on_worker_state_changed(self, event: Worker.StateChanged) -> None:
+        """Called when the worker state changes."""
+        if event.state in [WorkerState.PENDING, WorkerState.RUNNING]:
+            self.query_one("#btn-execute", Button).disabled = True
+            self.query_one("#btn-cancel", Button).disabled = False
+
+        if event.state not in [WorkerState.PENDING, WorkerState.RUNNING]:
+            self.query_one("#btn-execute", Button).disabled = False
+            self.query_one("#btn-cancel", Button).disabled = True

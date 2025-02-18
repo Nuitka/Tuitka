@@ -26,6 +26,10 @@
         width: 1fr;
         height:auto;
     }
+    Rule {
+        margin: 0;
+        color: black;
+    }
 }
 
 .command-label {
@@ -36,6 +40,10 @@
 CommandPreviewer {
     width: 1fr;
     height:auto;
+
+    Horizontal {
+        height: auto;
+    }
 
     VerticalScroll {
         height: auto;
@@ -65,11 +73,23 @@ Collapsible {
     width: 1fr;
 }
 
-Rule {
-    margin: 0;
-    color: black;
-}
 
 DataTable {
     width: 0.5fr;
+}
+
+Switch > .switch--slider {
+        color: $error;
+    }
+
+Switch.-on > .switch--slider {
+        color: $success;
+    }
+
+VerticalScroll {
+    height:1fr;
+
+    OutputLogger {
+        height:auto;
+    }
 }

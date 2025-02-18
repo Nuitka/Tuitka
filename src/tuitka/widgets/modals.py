@@ -28,6 +28,6 @@ class SplashScreen(ModalScreen):
         new_width, new_height = event.size
         self.image = Pixels.from_image_path(
             LOGO_PATH,
-            resize=(int(new_width**0.9), new_height),
+            resize=(int(new_width**0.9), new_height),  # Power ole
         )
         self.query_one("#static-image", Static).update(self.image)
