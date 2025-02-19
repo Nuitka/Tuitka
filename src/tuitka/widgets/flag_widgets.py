@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 if TYPE_CHECKING:
     from tuitka.app import NuitkaTUI
@@ -139,7 +139,9 @@ class SelectionFlag(Vertical):
     complete_flag: reactive[str | None] = reactive(None, init=False)
     was_changed: reactive[bool] = reactive(False, init=False)
 
-    def __init__(self, flag_dict: dict[str, list], *args, **kwargs) -> None:
+    def __init__(
+        self, flag_dict: dict[str, str | list | Sequence], *args, **kwargs
+    ) -> None:
         self.flag_dict = flag_dict
         super().__init__(*args, **kwargs)
         self.classes = "flagwidget"
@@ -215,7 +217,7 @@ class ListFlag(Vertical):
         if new_value:
             self.list_table.add_row(
                 new_value,
-                ":cross_mark: click/select row to remove value",
+                ":cross_mark: click to remove",
                 key=new_value,
             )
             event.input.clear()

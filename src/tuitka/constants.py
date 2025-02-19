@@ -6,12 +6,21 @@ Github
 [#fbdd58 underline]https://github.com/Nuitka/Nuitka[/]
 Documentation
 [#fbdd58 underline]https://nuitka.net[/]
+
+
 \nPress any key to continue\n
 """
 DEFAULT_SCRIPT_NAME = "script.py"
 ENTRY_POINT_DICT = {
     "nuitka": "nuitka \\",
     "uvx": "uvx --from nuitka nuitka \\",
+}
+
+MODE_DICT = {
+    "flag": "--mode",
+    "type": "selection",
+    "default": "accelerated",
+    "choices": ["app", "onefile", "accelerated", "module", "package", "standalone"],
 }
 
 INCLUDE_GROUP = {

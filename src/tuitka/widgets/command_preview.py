@@ -41,7 +41,8 @@ class CommandPreviewer(Vertical):
     app: "NuitkaTUI"
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll():
+        yield Label("Command preview and Building Executeable", classes="header-label")
+        with VerticalScroll(can_focus=False):
             yield EntrypointLabel()
             yield OptionsLabel()
             yield ScriptLabel()

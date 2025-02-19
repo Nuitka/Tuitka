@@ -1,7 +1,7 @@
 ModalScreen {
     width: 60%;
     height: auto;
-    align: center middle;
+    align: center top;
 
     Label {
         width: auto;

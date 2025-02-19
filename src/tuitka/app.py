@@ -21,7 +21,7 @@ from tuitka.widgets.flag_widgets import (
 from tuitka.widgets.modals import SplashScreen
 from tuitka.widgets.command_preview import CommandPreviewer
 from tuitka.widgets.output_logger import OutputLogger
-from tuitka.constants import OPTION_TREE, ENTRY_POINT_DICT
+from tuitka.constants import OPTION_TREE, ENTRY_POINT_DICT, MODE_DICT
 from tuitka.utils import get_entrypoint
 
 
@@ -39,12 +39,19 @@ class NuitkaTUI(App):
     options: reactive[dict] = reactive({}, init=False)
     script: reactive[str] = reactive("script.py", init=False)
 
+    def on_mount(self):
+        self.look_for_entrypoint()
+        self.push_screen(SplashScreen())
+
     def compose(self) -> ComposeResult:
         yield Header()
-        with VerticalScroll():
-            yield Label("Nuitka Executable Builder")
+        with VerticalScroll(can_focus=False, id="v-scroll-app"):
+            yield Label(
+                "Choose your python file and compilation mode", classes="header-label"
+            )
             yield ScriptInput()
-            yield Button("...")
+            yield SelectionFlag(flag_dict=MODE_DICT)
+            yield Label("Customize Options with feature flags", classes="header-label")
 
             for category, flag_list in OPTION_TREE.items():
                 with FlagCollapsible(title=category):
@@ -74,18 +81,14 @@ class NuitkaTUI(App):
             #                         yield SelectionFlag(flag_dict=flag_dict)
 
             yield CommandPreviewer()
-            yield OutputLogger()
+            yield Label("Log Output", classes="header-label")
+            yield OutputLogger(auto_scroll=True)
         yield Footer()
-
-    def on_mount(self):
-        self.look_for_entrypoint()
-        self.push_screen(SplashScreen())
 
     def look_for_entrypoint(self):
         executable = get_entrypoint()
         if executable is None:
             return
-
         self.entrypoint = ENTRY_POINT_DICT.get(executable)
 
     def update_options(self):
@@ -154,8 +157,10 @@ class NuitkaTUI(App):
             self.call_from_thread(
                 self.query_one(OutputLogger).write_line, output_line.decode().strip()
             )
-            self.call_from_thread(self.query_one(VerticalScroll).scroll_end)
 
+            self.call_from_thread(
+                self.query_one("#v-scroll-app", VerticalScroll).scroll_end
+            )
         self.call_from_thread(self.query_one(OutputLogger).write_line, "COMPLETED")
         # self.executer.wait()
 

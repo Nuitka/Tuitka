@@ -10,11 +10,19 @@
     Label {
         width: 1fr;
         height:auto;
+        padding: 1 0 0 0;
     }
 
     Switch {
         width: 1fr;
         height:auto;
+        & > .switch--slider {
+            color: $error;
+        }
+
+        &.-on > .switch--slider {
+                color: $success;
+            }
     }
 
     Select {
@@ -30,19 +38,23 @@
         margin: 0;
         color: black;
     }
+
+    DataTable {
+        width: 0.5fr;
+    }
 }
 
-.command-label {
-    width: 1fr;
-    height:auto;
-
-}
 CommandPreviewer {
     width: 1fr;
     height:auto;
 
     Horizontal {
-        height: auto;
+        height: 3;
+        Button {
+            height:1fr;
+            width: 1fr;
+            align:center bottom;
+        }
     }
 
     VerticalScroll {
@@ -51,16 +63,15 @@ CommandPreviewer {
     }
     Label {
         width: 1fr;
+        height: auto;
         background: #346c9c;
-    }
-    Button {
-        width: 1fr;
     }
 
     &.preview {
         dock: top;
         width: 1fr;
         height: auto;
+        border: outer #e2d189;
     }
 }
 
@@ -70,26 +81,27 @@ Screen {
 
 Collapsible {
     width: 1fr;
+    height:auto;
+    padding: 0 0 0 0;
+    border:none;
 }
 
 
-DataTable {
-    width: 0.5fr;
+.header-label {
+    width:1fr;
+    text-align:center;
+    background: #8ba3b7;
 }
-
-Switch > .switch--slider {
-        color: $error;
-    }
-
-Switch.-on > .switch--slider {
-        color: $success;
-    }
 
 VerticalScroll {
-    height:1fr;
+
+    background: #346c9c;
+    height: 1fr;
 
     OutputLogger {
         height:auto;
         background: #346c9c;
+        overflow-x: hidden;
+        overflow-y: hidden;
     }
 }
