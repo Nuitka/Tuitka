@@ -46,13 +46,12 @@ CommandPreviewer {
     }
 
     VerticalScroll {
-        height: auto;
-        max-height: 8;
-        background:darkblue;
+        height: 8;
+        background: #346c9c;
     }
     Label {
         width: 1fr;
-        background:darkblue;
+        background: #346c9c;
     }
     Button {
         width: 1fr;
@@ -91,5 +90,6 @@ VerticalScroll {
 
     OutputLogger {
         height:auto;
+        background: #346c9c;
     }
 }

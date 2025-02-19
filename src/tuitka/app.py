@@ -6,7 +6,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import VerticalScroll
 from textual.reactive import reactive
-from textual.widgets import Header, Footer, Label, Button
+from textual.widgets import Header, Footer, Label, Button  # , TabbedContent, TabPane
 from textual.worker import Worker, WorkerState
 from textual.widgets._collapsible import CollapsibleTitle
 
@@ -42,8 +42,9 @@ class NuitkaTUI(App):
     def compose(self) -> ComposeResult:
         yield Header()
         with VerticalScroll():
-            yield Label("Nuitka Executable Builder", classes="title")
+            yield Label("Nuitka Executable Builder")
             yield ScriptInput()
+            yield Button("...")
 
             for category, flag_list in OPTION_TREE.items():
                 with FlagCollapsible(title=category):
@@ -57,6 +58,20 @@ class NuitkaTUI(App):
                                 yield ListFlag(flag_dict=flag_dict)
                             case "selection":
                                 yield SelectionFlag(flag_dict=flag_dict)
+
+            # with TabbedContent():
+            #     for category, flag_list in OPTION_TREE.items():
+            #         with TabPane(category):
+            #             for flag_dict in flag_list:
+            #                 match flag_dict["type"]:
+            #                     case "bool":
+            #                         yield BoolFlag(flag_dict=flag_dict)
+            #                     case "string":
+            #                         yield StringFlag(flag_dict=flag_dict)
+            #                     case "list":
+            #                         yield ListFlag(flag_dict=flag_dict)
+            #                     case "selection":
+            #                         yield SelectionFlag(flag_dict=flag_dict)
 
             yield CommandPreviewer()
             yield OutputLogger()
