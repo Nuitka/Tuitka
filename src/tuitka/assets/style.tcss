@@ -93,10 +93,15 @@ Collapsible {
     background: #8ba3b7;
 }
 
+
 VerticalScroll {
 
     background: #346c9c;
     height: 1fr;
+
+    ScriptInput {
+        margin: 0 0 1 0;
+    }
 
     OutputLogger {
         height:auto;
