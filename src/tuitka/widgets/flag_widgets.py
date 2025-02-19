@@ -29,9 +29,11 @@ class FlagCollapsible(Collapsible):
 
     def watch_amount_changed(self):
         if self.amount_changed > 0:
-            amount_str = f"[green]{self.amount_changed}/{len(self._contents_list)}[/]"
+            amount_str = (
+                f"[$success]{self.amount_changed}/{len(self._contents_list)}[/]"
+            )
         else:
-            amount_str = f"[red]{self.amount_changed}/{len(self._contents_list)}[/]"
+            amount_str = f"[$error]{self.amount_changed}/{len(self._contents_list)}[/]"
         self.title = f"{amount_str} {self.flag}"
 
     def on_descendant_blur(self):
@@ -71,7 +73,7 @@ class BoolFlag(Vertical):
 
     def watch_was_changed(self):
         if self.was_changed:
-            self.query_one(Label).update(f"[green]{self.flag}[/]")
+            self.query_one(Label).update(f"[$success]{self.flag}[/]")
         else:
             self.query_one(Label).update(self.flag)
 
@@ -118,7 +120,7 @@ class StringFlag(Vertical):
 
     def watch_was_changed(self):
         if self.was_changed:
-            self.query_one(Label).update(f"[green]{self.flag}[/]")
+            self.query_one(Label).update(f"[$success]{self.flag}[/]")
         else:
             self.query_one(Label).update(self.flag)
 
@@ -171,7 +173,7 @@ class SelectionFlag(Vertical):
 
     def watch_was_changed(self):
         if self.was_changed:
-            self.query_one(Label).update(f"[green]{self.flag}[/]")
+            self.query_one(Label).update(f"[$success]{self.flag}[/]")
         else:
             self.query_one(Label).update(self.flag)
 
@@ -240,7 +242,7 @@ class ListFlag(Vertical):
 
     def watch_was_changed(self):
         if self.was_changed:
-            self.query_one(Label).update(f"[green]{self.flag}[/]")
+            self.query_one(Label).update(f"[$success]{self.flag}[/]")
         else:
             self.query_one(Label).update(self.flag)
             self.query_one(Input).focus()
