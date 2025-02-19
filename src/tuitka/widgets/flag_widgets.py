@@ -10,8 +10,6 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Label, Switch, Select, Input, Collapsible, Rule, DataTable
 
-from textual.widgets._collapsible import CollapsibleTitle
-
 
 class FlagCollapsible(Collapsible):
     amount_changed: reactive[int] = reactive(0)
@@ -36,16 +34,9 @@ class FlagCollapsible(Collapsible):
             amount_str = f"[red]{self.amount_changed}/{len(self._contents_list)}[/]"
         self.title = f"{amount_str} {self.flag}"
 
-    def on_descendant_focus(self):
-        self.collapsed = False
-
     def on_descendant_blur(self):
         if not self.has_focus_within:
             self.collapsed = True
-
-    def _on_collapsible_title_toggle(self, event: CollapsibleTitle.Toggle) -> None:
-        event.stop()
-        self.collapsed = not self.collapsed
 
 
 class BoolFlag(Vertical):

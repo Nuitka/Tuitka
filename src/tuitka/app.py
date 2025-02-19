@@ -8,6 +8,7 @@ from textual.containers import VerticalScroll
 from textual.reactive import reactive
 from textual.widgets import Header, Footer, Label, Button
 from textual.worker import Worker, WorkerState
+from textual.widgets._collapsible import CollapsibleTitle
 
 from tuitka.widgets.script_input import ScriptInput
 from tuitka.widgets.flag_widgets import (
@@ -28,8 +29,10 @@ class NuitkaTUI(App):
     CSS_PATH = Path("assets/style.tcss")
     BINDINGS = [
         Binding("ctrl+l", "float_preview", "Pin Preview", priority=True),
-        Binding("ctrl+j", "focus_next_flag", "Next category", priority=True),
-        Binding("ctrl+k", "focus_previous_flag", "Previous category", priority=True),
+        Binding("ctrl+j", "focus_next_category", "Next category", priority=True),
+        Binding(
+            "ctrl+k", "focus_previous_category", "Previous category", priority=True
+        ),
     ]
 
     entrypoint: reactive[str] = reactive("", init=False)
@@ -108,34 +111,13 @@ class NuitkaTUI(App):
     def action_float_preview(self):
         self.query_one(CommandPreviewer).toggle_class("preview")
 
-    def action_focus_previous_flag(self):
-        # Handle movement from first to last category
-        if self.focused.parent.has_class("flagwidget"):
-            first_focused = self.focused.parent.parent.parent._contents_list.index(
-                self.focused.parent
-            )
-            if first_focused == 0:
-                self.action_focus_previous()
+    def action_focus_previous_category(self):
+        self.screen.focus_previous(CollapsibleTitle)
+        self.focused.parent.collapsed = False
 
-        self.action_focus_previous()
-        if isinstance(self.focused.parent, FlagCollapsible):
-            # focus the last flag widget
-            try:
-                self.focused.parent._contents_list[-1].children[-1].focus()
-            except AttributeError:
-                self.action_focus_previous_flag()
-            return
-        if not self.focused.parent.has_class("flagwidget"):
-            self.action_focus_previous_flag()
-
-    def action_focus_next_flag(self):
-        self.action_focus_next()
-        if isinstance(self.focused.parent, FlagCollapsible):
-            # focus the first flag widget
-            self.focused.parent._contents_list[0].children[-1].focus()
-            return
-        if not self.focused.parent.has_class("flagwidget"):
-            self.action_focus_next_flag()
+    def action_focus_next_category(self):
+        self.screen.focus_next(CollapsibleTitle)
+        self.focused.parent.collapsed = False
 
     @work(thread=True, exclusive=True)
     async def run_command(self, command: str):
