@@ -204,7 +204,7 @@ class ListFlag(Vertical):
     def compose(self) -> ComposeResult:
         with Horizontal():
             yield Label(self.flag_dict["flag"])
-            yield Input()
+            yield Input(placeholder="enter a value and press enter to add to list")
         self.list_table = DataTable(cursor_type="row", show_header=False)
         self.list_table.add_column("option", key="option")
         self.list_table.add_column("remove", key="remove")
