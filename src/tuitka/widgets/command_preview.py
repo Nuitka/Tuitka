@@ -49,7 +49,7 @@ class CommandPreviewer(Vertical):
 
         with Horizontal():
             yield Button("Build", variant="success", id="btn-execute")
-            yield Button("Cancel", variant="error", id="btn-cancel", disabled=True)
+            yield Button("Cancel", variant="error", id="btn-abort", disabled=True)
 
         return super().compose()
 
@@ -66,9 +66,9 @@ class CommandPreviewer(Vertical):
         command = command.replace("\\\n", "")
         self.app.run_command(command=command)
 
-    @on(Button.Pressed, "#btn-cancel")
+    @on(Button.Pressed, "#btn-abort")
     def action_cancel_command(self):
-        self.notify("test cancel")
+        self.notify("Stopped", severity="error")
         # self.app.executer.send_signal(SIGINT)
         self.app.executer.terminate()
         self.app.workers.cancel_all()

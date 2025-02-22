@@ -99,8 +99,16 @@ VerticalScroll {
     background: #346c9c;
     height: 1fr;
 
-    ScriptInput {
-        margin: 0 0 1 0;
+    ScriptInputCombi {
+        height: auto;
+
+        ScriptInput {
+            margin: 0 0 1 0;
+            width:1fr;
+        }
+        Button {
+            width:15%;
+        }
     }
 
     OutputLogger {

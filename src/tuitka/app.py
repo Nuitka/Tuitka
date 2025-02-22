@@ -10,7 +10,7 @@ from textual.widgets import Header, Footer, Label, Button  # , TabbedContent, Ta
 from textual.worker import Worker, WorkerState
 from textual.widgets._collapsible import CollapsibleTitle
 
-from tuitka.widgets.script_input import ScriptInput
+from tuitka.widgets.script_input import ScriptInputCombi
 from tuitka.widgets.flag_widgets import (
     ListFlag,
     BoolFlag,
@@ -49,7 +49,7 @@ class NuitkaTUI(App):
             yield Label(
                 "Choose your python file and compilation mode", classes="header-label"
             )
-            yield ScriptInput()
+            yield ScriptInputCombi()
             yield SelectionFlag(flag_dict=MODE_DICT)
             yield Label("Customize Options with feature flags", classes="header-label")
 
@@ -99,6 +99,7 @@ class NuitkaTUI(App):
         self.notify(
             title="Entrypoint detected",
             message=f"Using [yellow]{self.entrypoint.split()[0]}[/] to build your executable",
+            timeout=2,
         )
 
     def watch_options(self):
@@ -168,8 +169,8 @@ class NuitkaTUI(App):
         """Called when the worker state changes."""
         if event.state in [WorkerState.PENDING, WorkerState.RUNNING]:
             self.query_one("#btn-execute", Button).disabled = True
-            self.query_one("#btn-cancel", Button).disabled = False
+            self.query_one("#btn-abort", Button).disabled = False
 
         if event.state not in [WorkerState.PENDING, WorkerState.RUNNING]:
             self.query_one("#btn-execute", Button).disabled = False
-            self.query_one("#btn-cancel", Button).disabled = True
+            self.query_one("#btn-abort", Button).disabled = True

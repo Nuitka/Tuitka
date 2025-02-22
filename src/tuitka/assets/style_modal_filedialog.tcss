@@ -1,0 +1,49 @@
+ModalScreen {
+    align: center middle;
+
+    Vertical {
+        width: 75%;
+        height: auto;
+    }
+    #horizontal-root {
+        width: auto;
+        height: auto;
+
+        Button {
+            width: auto;
+            min-width:6;
+            height: auto;
+            padding: 0;
+            margin: 0;
+        }
+        Input {
+            width: 8fr;
+            height: auto;
+        }
+    }
+
+    DirectoryTree {
+        width: 1fr;
+        height: auto;
+    }
+
+    Static {
+        height: auto;
+        width: 1fr;
+        background: $background;
+    }
+
+    #label-selected-file {
+        height: auto;
+        width: 1fr;
+    }
+    #horizontal-navigation {
+        width: 1fr;
+        height: auto;
+
+        Button {
+            width: 1fr;
+            height: auto;
+        }
+    }
+}
