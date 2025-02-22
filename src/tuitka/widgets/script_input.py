@@ -40,6 +40,6 @@ class ScriptInputCombi(Horizontal):
     def on_button_pressed(self):
         self.app.push_screen(FileDialogScreen(), callback=self.update_script_input)
 
-    def update_script_input(self, selected_file: str):
-        self.query_one(ScriptInput).value = selected_file
-        # self.app.script = selected_file
+    def update_script_input(self, selected_file: str | None):
+        if selected_file is not None:
+            self.query_one(ScriptInput).value = selected_file

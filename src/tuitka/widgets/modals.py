@@ -42,7 +42,7 @@ class CustomDirectoryTree(DirectoryTree):
         return [path for path in paths if not path.name.startswith(exclude_patterns)]
 
 
-class FileDialogScreen(ModalScreen):
+class FileDialogScreen(ModalScreen[str | None]):
     CSS_PATH = Path("../assets/style_modal_filedialog.tcss")
     dir_root: reactive[Path] = reactive(Path.cwd(), init=False)
     selected_py_file: reactive[str] = reactive("", init=False)
