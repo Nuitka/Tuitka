@@ -18,7 +18,3 @@ def get_entrypoint():
         return "nuitka"
     if is_uvx_installed():
         return "uvx"
-    return None
-
-
-def get_py_files_for_suggester(): ...
