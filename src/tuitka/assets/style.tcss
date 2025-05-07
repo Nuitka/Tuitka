@@ -1,79 +1,3 @@
-.flagwidget {
-    width:1fr;
-    height:auto;
-
-    Horizontal {
-        width: 1fr;
-        height:auto;
-    }
-
-    Label {
-        width: 1fr;
-        height:auto;
-        padding: 1 0 0 0;
-    }
-
-    Switch {
-        width: 1fr;
-        height:auto;
-        & > .switch--slider {
-            color: $error;
-        }
-
-        &.-on > .switch--slider {
-                color: $success;
-            }
-    }
-
-    Select {
-        width: 1fr;
-        height:auto;
-    }
-
-    Input {
-        width: 1fr;
-        height:auto;
-    }
-    Rule {
-        margin: 0;
-        color: black;
-    }
-
-    DataTable {
-        width: 0.5fr;
-    }
-}
-
-CommandPreviewer {
-    width: 1fr;
-    height:auto;
-
-    Horizontal {
-        height: 3;
-        Button {
-            height:1fr;
-            width: 1fr;
-            align:center bottom;
-        }
-    }
-
-    VerticalScroll {
-        height: 8;
-        background: #346c9c;
-    }
-    Label {
-        width: 1fr;
-        height: auto;
-        background: #346c9c;
-    }
-
-    &.preview {
-        dock: top;
-        width: 1fr;
-        height: auto;
-        border: outer #e2d189;
-    }
-}
 
 Screen {
     content-align: center middle;
@@ -90,31 +14,14 @@ Collapsible {
 .header-label {
     width:1fr;
     text-align:center;
-    background: #8ba3b7;
 }
 
 
-VerticalScroll {
+#script_input_placeholder {
+    height: 50%;
+    align: center middle;
+}
 
-    background: #346c9c;
-    height: 1fr;
-
-    ScriptInputCombi {
-        height: auto;
-
-        ScriptInput {
-            margin: 0 0 1 0;
-            width:1fr;
-        }
-        Button {
-            width:15%;
-        }
-    }
-
-    OutputLogger {
-        height:auto;
-        background: #346c9c;
-        overflow-x: hidden;
-        overflow-y: hidden;
-    }
+#script_input {
+    width: 50%;
 }

@@ -1,39 +1,45 @@
+import asyncio
 from pathlib import Path
 from typing import Iterable
 
-from textual import on
-from textual.reactive import reactive
-from textual.events import Resize
-from textual.containers import Vertical, Horizontal
+from textual import on, work
 from textual.app import ComposeResult
+from textual.containers import Center, Horizontal, Vertical
+from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Label, Static, Input, DirectoryTree, Button
-from rich_pixels import Pixels
+from textual.widgets import Button, DirectoryTree, Input, Label, Log, Static
 
-from tuitka.constants import LOGO_PATH, SPLASHSCREEN_TEXT
+from tuitka.constants import SPLASHSCREEN_TEXT
+from tuitka.utils import prepare_nuitka_command
+
+
+class OutputLogger(Log):
+    can_focus = False
 
 
 class SplashScreen(ModalScreen):
-    CSS_PATH = Path("../assets/style_modal_splash.tcss")
+    CSS = """
+    SplashScreen {
+        background: $background;
+        color: $text;
+        align: center middle;
+
+        Static {
+            text-align: center;
+        }
+
+        #splashscreen-text {
+            color: $text-muted;
+        }
+    }
+    """
 
     def compose(self) -> ComposeResult:
-        yield Label("Nuitka")
-        yield Static(id="static-image")
         yield Static(SPLASHSCREEN_TEXT)
-
-        return super().compose()
+        yield Static("Press any key to continue...", id="splashscreen-text")
 
     def on_key(self):
         self.dismiss()
-
-    @on(Resize)
-    def keep_image_size(self, event: Resize):
-        new_width, new_height = event.size
-        self.image = Pixels.from_image_path(
-            LOGO_PATH,
-            resize=(int(new_width**0.9), new_height),  # Power ole
-        )
-        self.query_one("#static-image", Static).update(self.image)
 
 
 class CustomDirectoryTree(DirectoryTree):
@@ -99,3 +105,38 @@ class FileDialogScreen(ModalScreen[str | None]):
     def watch_dir_root(self):
         if self.dir_root.exists() and self.dir_root.is_dir():
             self.query_exactly_one(CustomDirectoryTree).path = self.dir_root
+
+
+class CompilationScreen(ModalScreen):
+    CSS_PATH = Path("../assets/style_modal_compilation.tcss")
+
+    def compose(self):
+        self.run_command()
+        with Center():
+            yield Label("Compilation in progress...")
+        yield OutputLogger()
+
+    @work(thread=True, exclusive=True)
+    async def run_command(self):
+        self.app.call_from_thread(self.query_one(OutputLogger).clear)
+        cmd, requirements_txt = prepare_nuitka_command(Path(self.app.script))
+
+        self.query_one(Label).update(" ".join(cmd[cmd.index("nuitka") :]))
+        self.executer = await asyncio.create_subprocess_shell(
+            " ".join(cmd),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+
+        while True:
+            if self.executer.returncode is not None:
+                break
+            if self.executer.stdout is None:
+                break
+            output_line = await self.executer.stdout.readline()
+
+            self.app.call_from_thread(
+                self.query_one(OutputLogger).write_line, output_line.decode()
+            )
+
+        requirements_txt.unlink(missing_ok=True)

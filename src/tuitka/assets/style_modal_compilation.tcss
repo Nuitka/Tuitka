@@ -1,0 +1,10 @@
+CompilationScreen {
+    OutputLogger {
+        height: 60%;
+        dock: bottom;
+    }
+
+    Label {
+        width: auto;
+    }
+}

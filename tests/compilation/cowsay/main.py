@@ -1,3 +1,11 @@
+# /// script
+# dependencies = [
+#   "requests<3",
+#   "rich",
+#   "cowsay",
+# ]
+# ///
+
 import cowsay
 
 if __name__ == "__main__":
