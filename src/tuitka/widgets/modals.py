@@ -4,13 +4,18 @@ from typing import Iterable
 
 from textual import on, work
 from textual.app import ComposeResult
-from textual.containers import Center, Horizontal, Vertical
+from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, DirectoryTree, Input, Label, Log, Static
+from textual.widgets import Button, DirectoryTree, Input, Log, Static
 
 from tuitka.constants import SPLASHSCREEN_TEXT
 from tuitka.utils import prepare_nuitka_command
+from tuitka.cli_arguments import CompilationSettings
+from tuitka.assets import (
+    STYLE_MODAL_FILEDIALOG,
+    STYLE_MODAL_COMPILATION,
+)
 
 
 class OutputLogger(Log):
@@ -18,27 +23,38 @@ class OutputLogger(Log):
 
 
 class SplashScreen(ModalScreen):
-    CSS = """
+    DEFAULT_CSS = """
     SplashScreen {
-        background: $background;
-        color: $text;
         align: center middle;
-
-        Static {
-            text-align: center;
-        }
-
-        #splashscreen-text {
-            color: $text-muted;
-        }
     }
+    
+    #splash-dialog {
+        width: 70;
+        height: 20;
+        padding: 2;
+    }
+    
+    #splash-content {
+        text-align: center;
+        content-align: center middle;
+        height: 1fr;
+    }
+
+    .continue-text {
+        color: $text-muted;
+        text-align: center;
+        margin: 1 0 0 0;
+    }
+
     """
 
     def compose(self) -> ComposeResult:
-        yield Static(SPLASHSCREEN_TEXT)
-        yield Static("Press any key to continue...", id="splashscreen-text")
+        with Vertical(id="splash-dialog"):
+            yield Static(SPLASHSCREEN_TEXT, id="splash-content")
+            yield Static("Press any key to continue...", classes="continue-text")
 
-    def on_key(self):
+    def on_key(self) -> None:
+        """Dismiss on any key press."""
         self.dismiss()
 
 
@@ -49,94 +65,175 @@ class CustomDirectoryTree(DirectoryTree):
 
 
 class FileDialogScreen(ModalScreen[str | None]):
-    CSS_PATH = Path("../assets/style_modal_filedialog.tcss")
+    CSS_PATH = STYLE_MODAL_FILEDIALOG
+
+    DEFAULT_CSS = """
+    Input {
+        width: 1fr;
+    }
+    """
+
     dir_root: reactive[Path] = reactive(Path.cwd(), init=False)
     selected_py_file: reactive[str] = reactive("", init=False)
 
-    def on_mount(self):
-        self.query_exactly_one(Input).focus()
-        self.query_exactly_one(Input).border_title = "root path"
-        self.query_exactly_one(Input).border_title = ""
+    def on_mount(self) -> None:
+        self.query_one(Input).focus()
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            with Horizontal(id="horizontal-root"):
-                yield Input(self.dir_root.as_posix())
-                yield Button(":house:", variant="warning", id="btn-home")
-                yield Button("CWD", variant="error", id="btn-cwd")
+            with Horizontal(classes="path-controls"):
+                yield Input(
+                    value=self.dir_root.as_posix(),
+                    placeholder="Enter directory path",
+                    id="path_input",
+                )
+                yield Button("🏠", variant="default", id="btn_home", tooltip="Home")
+                yield Button(
+                    "📁", variant="default", id="btn_cwd", tooltip="Current Dir"
+                )
 
-            yield CustomDirectoryTree(path=self.dir_root)
-            yield Label("File selected", classes="header-label")
-            yield Label("No file selected yet", id="label-selected-file")
+            yield CustomDirectoryTree(path=self.dir_root, id="file_tree")
+
             with Horizontal(id="horizontal-navigation"):
                 yield Button(
-                    "Continue", variant="success", id="btn-continue", disabled=True
+                    "Select", variant="success", id="btn_select", disabled=True
                 )
-                yield Button("Cancel", variant="error", id="btn-cancel")
+                yield Button("Cancel", variant="default", id="btn_cancel")
 
     @on(Button.Pressed)
-    def button_interactions(self, event: Button.Pressed):
-        if "home" in event.button.id:
-            self.query_exactly_one(Input).value = Path.home().as_posix()
-            self.dir_root = Path.home()
-        elif "cwd" in event.button.id:
-            self.query_exactly_one(Input).value = Path.cwd().as_posix()
-            self.dir_root = Path.cwd()
-        elif "continue" in event.button.id:
+    def handle_button_press(self, event: Button.Pressed) -> None:
+        button_id = event.button.id
+
+        if button_id == "btn_home":
+            self._set_directory(Path.home())
+        elif button_id == "btn_cwd":
+            self._set_directory(Path.cwd())
+        elif button_id == "btn_select":
             self.dismiss(result=self.selected_py_file)
-        elif "cancel" in event.button.id:
+        elif button_id == "btn_cancel":
             self.dismiss()
 
-    def on_input_changed(self, event: Input.Changed):
-        self.dir_root = Path(event.input.value)
+    @on(Input.Changed, "#path_input")
+    def handle_path_change(self, event: Input.Changed) -> None:
+        try:
+            path = Path(event.value)
+            if path.exists() and path.is_dir():
+                self.dir_root = path
+        except (OSError, ValueError):
+            pass
 
     @on(DirectoryTree.FileSelected)
-    def choose_a_file(self, event: DirectoryTree.FileSelected):
-        if event.path.name.endswith(".py"):
-            self.query_one("#btn-continue").disabled = False
+    def handle_file_selection(self, event: DirectoryTree.FileSelected) -> None:
+        if event.path.suffix == ".py":
             self.selected_py_file = event.path.as_posix()
+            self.query_one("#btn_select").disabled = False
         else:
-            self.query_one("#btn-continue").disabled = True
-            self.selected_py_file = "[red]not a valid python File[/]"
+            self.selected_py_file = ""
+            self.query_one("#btn_select").disabled = True
 
-    def watch_selected_py_file(self, new_value: Input.Submitted):
-        self.query_exactly_one("#label-selected-file", Label).update(new_value)
-
-    def watch_dir_root(self):
+    def watch_dir_root(self) -> None:
         if self.dir_root.exists() and self.dir_root.is_dir():
-            self.query_exactly_one(CustomDirectoryTree).path = self.dir_root
+            self.query_one("#file_tree", CustomDirectoryTree).path = self.dir_root
+            self.query_one("#path_input", Input).value = self.dir_root.as_posix()
+
+    def _set_directory(self, path: Path) -> None:
+        self.dir_root = path
 
 
 class CompilationScreen(ModalScreen):
-    CSS_PATH = Path("../assets/style_modal_compilation.tcss")
 
-    def compose(self):
-        self.run_command()
-        with Center():
-            yield Label("Compilation in progress...")
-        yield OutputLogger()
+    CSS_PATH = STYLE_MODAL_COMPILATION
+
+    compilation_finished: reactive[bool] = reactive(False, init=False)
+    compilation_success: reactive[bool] = reactive(False, init=False)
+
+    def __init__(self, settings: CompilationSettings) -> None:
+        super().__init__()
+        self.settings = settings
+
+    def compose(self) -> ComposeResult:
+        with Vertical():
+            yield OutputLogger(id="output_log")
+            yield Static(
+                "Compilation in progress...",
+                id="status_label",
+                classes="compilation-status in-progress",
+            )
+            with Horizontal(classes="compilation-controls"):
+                yield Button("Close", variant="default", id="btn_close", disabled=True)
+                yield Button("Cancel", variant="error", id="btn_cancel")
+
+    @on(Button.Pressed)
+    def handle_button_press(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn_close":
+            self.dismiss()
+        elif event.button.id == "btn_cancel":
+            # TODO: Implement process cancellation
+            self.dismiss()
+
+    def watch_compilation_finished(self, finished: bool) -> None:
+        if finished:
+            close_btn = self.query_one("#btn_close", Button)
+            cancel_btn = self.query_one("#btn_cancel", Button)
+            status_label = self.query_one("#status_label", Static)
+
+            close_btn.disabled = False
+            cancel_btn.disabled = True
+
+            if self.compilation_success:
+                status_label.update("✓ Compilation completed successfully!")
+                status_label.set_class(True, "success")
+                status_label.set_class(False, "in-progress")
+            else:
+                status_label.update("✗ Compilation failed!")
+                status_label.set_class(True, "error")
+                status_label.set_class(False, "in-progress")
+
+    def on_mount(self) -> None:
+        self.run_compilation()
 
     @work(thread=True, exclusive=True)
-    async def run_command(self):
-        self.app.call_from_thread(self.query_one(OutputLogger).clear)
-        cmd, requirements_txt = prepare_nuitka_command(Path(self.app.script))
+    async def run_compilation(self) -> None:
+        log = self.query_one("#output_log", OutputLogger)
 
-        self.query_one(Label).update(" ".join(cmd[cmd.index("nuitka") :]))
-        self.executer = await asyncio.create_subprocess_shell(
+        self.app.call_from_thread(log.clear)
+        cmd, requirements_txt = prepare_nuitka_command(
+            Path(self.app.script), self.settings
+        )
+
+        try:
+            nuitka_index = cmd.index("nuitka")
+            cmd_display = " ".join(cmd[nuitka_index:])
+        except ValueError:
+            cmd_display = " ".join(cmd)
+
+        self.app.call_from_thread(log.write_line, cmd_display)
+        self.app.call_from_thread(log.write_line, "")
+
+        process = await asyncio.create_subprocess_shell(
             " ".join(cmd),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
 
         while True:
-            if self.executer.returncode is not None:
+            if process.returncode is not None:
                 break
-            if self.executer.stdout is None:
+            if process.stdout is None:
                 break
-            output_line = await self.executer.stdout.readline()
 
-            self.app.call_from_thread(
-                self.query_one(OutputLogger).write_line, output_line.decode()
-            )
+            line = await process.stdout.readline()
+            if not line:
+                break
 
-        requirements_txt.unlink(missing_ok=True)
+            self.app.call_from_thread(log.write_line, line.decode().rstrip())
+
+        await process.wait()
+
+        self.app.call_from_thread(
+            setattr, self, "compilation_success", process.returncode == 0
+        )
+        self.app.call_from_thread(setattr, self, "compilation_finished", True)
+
+        if requirements_txt and requirements_txt.exists():
+            requirements_txt.unlink()

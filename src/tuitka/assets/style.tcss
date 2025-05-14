@@ -1,27 +1,40 @@
 
+/* Minimalistic TUI styling for Tuitka */
+
+/* Global app styles */
 Screen {
-    content-align: center middle;
+    background: $background;
 }
 
-Collapsible {
-    width: 1fr;
-    height:auto;
-    padding: 0 0 0 0;
-    border:none;
+/* Header styling */
+Header {
+    background: $primary;
+    color: $text;
+}
+
+/* Footer styling */  
+Footer {
+    background: $surface;
+}
+
+/* Button improvements */
+Button {
+    margin: 0 1;
+}
+
+Button:hover {
+    background: $primary-darken-1;
 }
 
 
-.header-label {
-    width:1fr;
-    text-align:center;
+/* Log output styling */
+Log {
+    background: $surface;
+    scrollbar-background: $surface;
+    scrollbar-color: $primary;
 }
 
-
-#script_input_placeholder {
-    height: 50%;
-    align: center middle;
-}
-
-#script_input {
-    width: 50%;
+/* Directory tree styling */
+DirectoryTree {
+    background: $surface;
 }

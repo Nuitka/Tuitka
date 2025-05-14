@@ -1,0 +1,62 @@
+ModalScreen {
+    align: center middle;
+
+    Vertical {
+        width: 90%;
+        max-width: 140;
+        height: 80%;
+        max-height: 40;
+        padding: 2;
+        background: $surface;
+        border: solid $primary;
+    }
+
+    .settings-header {
+        height: auto;
+        text-align: center;
+        margin: 0 0 1 0;
+        color: $accent;
+        text-style: bold;
+    }
+
+    .scrollable-content {
+        height: 1fr;
+        width: 1fr;
+    }
+
+    .settings-section {
+        margin: 0 0 2 0;
+        height: auto;
+        width: 1fr;
+    }
+
+    .settings-section Label {
+        color: $text;
+        text-style: bold;
+        margin: 0 0 1 0;
+        height: auto;
+    }
+
+    Checkbox {
+        margin: 0 0 1 0;
+        height: auto;
+        width: 1fr;
+    }
+
+    .settings-controls {
+        height: auto;
+        margin: 1 0 0 0;
+    }
+
+    .settings-controls Button {
+        width: 1fr;
+        height: auto;
+        min-height: 3;
+    }
+
+    .option-row {
+        height: auto;
+        margin: 0 0 1 0;
+        width: 1fr;
+    }
+}

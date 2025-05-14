@@ -2,6 +2,7 @@ import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
+from tuitka.cli_arguments import CompilationSettings
 
 
 @dataclass
@@ -59,8 +60,8 @@ def parse_723(script: str) -> DependenciesMetadata:
     )
 
 
-def parse_requirements_text(requirements: str) -> DependenciesMetadata:
-    with open(requirements, "r") as f:
+def parse_requirements_text(requirements: Path) -> DependenciesMetadata:
+    with requirements.open("r") as f:
         lines = f.readlines()
     return DependenciesMetadata(
         dependencies=[
@@ -95,7 +96,7 @@ def parse_dependencies(_path: str | Path) -> DependenciesMetadata:
             content = f.read()
         return parse_pyproject(content.decode())
     elif path.name == "requirements.txt":
-        return parse_requirements_text(str(path))
+        return parse_requirements_text(path)
     else:
         with path.open("r") as f:
             script = f.read()
@@ -105,20 +106,31 @@ def parse_dependencies(_path: str | Path) -> DependenciesMetadata:
     return DependenciesMetadata(dependencies=[])
 
 
-def prepare_nuitka_command(script_path: Path) -> tuple[list[str], Path]:
-    requirements_txt = parse_dependencies(script_path).temp_requirements()
+def prepare_nuitka_command(
+    script_path: Path,
+    settings: CompilationSettings,
+) -> tuple[list[str], Path | None]:
+    dependencies_metadata = parse_dependencies(script_path)
+    requirements_file = None
+
     cmd = [
         "uvx",
+        "--python",
+        settings.python_version,
         "--isolated",
-        "--with-requirements",
-        requirements_txt.as_posix(),
-        "nuitka",
-        "--remove-output",
-        "--onefile",
-        "--run",
-        script_path.as_posix(),
     ]
-    return cmd, requirements_txt
+
+    if dependencies_metadata.dependencies:
+        requirements_file = dependencies_metadata.temp_requirements()
+        cmd.extend(["--with-requirements", requirements_file.as_posix()])
+
+    cmd.append("nuitka")
+
+    cmd.extend(settings.to_nuitka_args())
+
+    cmd.append(script_path.as_posix())
+
+    return cmd, requirements_file
 
 
 __all__ = ["prepare_nuitka_command"]

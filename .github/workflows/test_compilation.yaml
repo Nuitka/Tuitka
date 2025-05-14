@@ -1,8 +1,6 @@
 name: unit-tests
 
 on:
-  push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -11,9 +9,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12"]
+        os: ["ubuntu-latest", "macos-latest"]
     continue-on-error: true
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,9 +24,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-
-      - name: install dependencies
-        run: uvx poetry install --with dev
-
       - name: Unit tests
         run: uv run tuitka tests/compilation/cowsay/main.py
+        # run: uvx --with cowsay --with nuitka nuitka --assume-yes-for-downloads --run --onefile tests/compilation/cowsay/main.py
+      
+      # - name: run binary
+      #   run: ./main.bin

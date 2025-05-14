@@ -2,8 +2,13 @@ ModalScreen {
     align: center middle;
 
     Vertical {
-        width: 75%;
+        width: 80%;
+        max-width: 120;
         height: auto;
+        max-height: 30;
+        min-height: 15;
+        padding: 1;
+        background: $surface;
     }
     #horizontal-root {
         width: auto;
@@ -22,28 +27,26 @@ ModalScreen {
         }
     }
 
+    .path-controls {
+        height: 3;
+        margin: 0 0 1 0;
+    }
+
     DirectoryTree {
         width: 1fr;
         height: auto;
+        max-height: 20;
+        min-height: 5;
     }
 
-    Static {
-        height: auto;
-        width: 1fr;
-        background: $background;
-    }
-
-    #label-selected-file {
-        height: auto;
-        width: 1fr;
-    }
     #horizontal-navigation {
         width: 1fr;
-        height: auto;
+        height: 3;
+        margin: 1 0 0 0;
 
         Button {
             width: 1fr;
-            height: auto;
+            height: 3;
         }
     }
 }
