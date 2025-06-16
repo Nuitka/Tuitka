@@ -4,13 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from tuitka.cli_arguments import CompilationSettings
 
-import os
 import sys
-import textwrap
 
-from nuitka.containers.OrderedSets import OrderedSet
-from nuitka.utils.CommandLineOptions import OurOptionParser
-from nuitka.utils.FileOperations import changeTextFileContents
 
 
 @dataclass
@@ -141,11 +136,12 @@ def prepare_nuitka_command(
     return cmd, requirements_file
 
 
-__all__ = ["prepare_nuitka_command"]
+__all__ = ["prepare_nuitka_command", "create_nuitka_dict"]
 
 
+def create_nuitka_dict():
+    from collections import OrderedDict
 
-def _getParser():
     sys.argv.append("--help-all")
     from nuitka.OptionParsing import parser
     from nuitka.plugins.Plugins import addStandardPluginCommandLineOptions
@@ -153,8 +149,63 @@ def _getParser():
     addStandardPluginCommandLineOptions(parser=parser, plugin_help_mode=True)
     del sys.argv[-1]
 
-    return parser
+    options_dict = OrderedDict()
+
+    if hasattr(parser, "option_list") and parser.option_list:
+        general_options = OrderedDict()
+        for option in parser.option_list:
+            option_names = option._short_opts + option._long_opts
+            option_data = {
+                "names": option_names,
+                "help": option.help,
+                "default": getattr(option, "default", None),
+                "type": getattr(option, "type", None),
+                "choices": getattr(option, "choices", None),
+                "dest": getattr(option, "dest", None),
+                "action": getattr(option, "action", None),
+                "metavar": getattr(option, "metavar", None),
+            }
+
+            primary_name = next(
+                (name for name in option_names if name.startswith("--")),
+                option_names[0] if option_names else str(option),
+            )
+            general_options[primary_name] = option_data
+
+        if general_options:
+            options_dict["General Options"] = general_options
+
+    for group in parser.option_groups:
+        group_name = group.title
+        group_options = OrderedDict()
+
+        for option in group.option_list:
+            option_names = option._short_opts + option._long_opts
+            option_data = {
+                "names": option_names,
+                "help": option.help,
+                "default": getattr(option, "default", None),
+                "type": getattr(option, "type", None),
+                "choices": getattr(option, "choices", None),
+                "dest": getattr(option, "dest", None),
+                "action": getattr(option, "action", None),
+                "metavar": getattr(option, "metavar", None),
+            }
+
+            primary_name = next(
+                (name for name in option_names if name.startswith("--")),
+                option_names[0] if option_names else str(option),
+            )
+            group_options[primary_name] = option_data
+
+        options_dict[group_name] = group_options
+
+    return options_dict
 
 
 if __name__ == "__main__":
-    _getParser().print_help()
+    import json
+    from rich import print
+
+    options_dict = create_nuitka_dict()
+    print(json.dumps(options_dict, indent=4, default=str))
