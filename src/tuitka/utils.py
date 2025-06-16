@@ -7,7 +7,6 @@ from tuitka.cli_arguments import CompilationSettings
 import sys
 
 
-
 @dataclass
 class DependenciesMetadata:
     dependencies: list[str]
@@ -136,10 +135,10 @@ def prepare_nuitka_command(
     return cmd, requirements_file
 
 
-__all__ = ["prepare_nuitka_command", "create_nuitka_dict"]
+__all__ = ["prepare_nuitka_command", "create_nuitka_options_dict"]
 
 
-def create_nuitka_dict():
+def create_nuitka_options_dict() -> dict[str, dict[str, dict]]:
     from collections import OrderedDict
 
     sys.argv.append("--help-all")
@@ -207,5 +206,5 @@ if __name__ == "__main__":
     import json
     from rich import print
 
-    options_dict = create_nuitka_dict()
+    options_dict = create_nuitka_options_dict()
     print(json.dumps(options_dict, indent=4, default=str))

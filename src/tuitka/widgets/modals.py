@@ -7,11 +7,23 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, DirectoryTree, Input, Log, Static, Checkbox, Label
+from textual.widgets import (
+    Button,
+    DirectoryTree,
+    Input,
+    Log,
+    RadioButton,
+    RadioSet,
+    Select,
+    Static,
+    Switch,
+    TabbedContent,
+    TabPane,
+)
 from textual.containers import ScrollableContainer
 
 from tuitka.constants import SPLASHSCREEN_TEXT
-from tuitka.utils import prepare_nuitka_command
+from tuitka.utils import prepare_nuitka_command, create_nuitka_options_dict
 from tuitka.cli_arguments import CompilationSettings
 from tuitka.assets import (
     STYLE_MODAL_FILEDIALOG,
@@ -240,134 +252,205 @@ class CompilationScreen(ModalScreen):
             requirements_txt.unlink()
 
 
-class NuitkaSettingsScreen(ModalScreen[CompilationSettings | None]):
-    """Settings screen for custom Nuitka configuration options."""
-
-    CSS_PATH = STYLE_MODAL_SETTINGS
-
-    def __init__(self, initial_settings: CompilationSettings | None = None):
-        super().__init__()
-        self.settings = initial_settings or CompilationSettings()
+class ModalBoolFlag(Horizontal):
+    def __init__(self, flag: str, help_text: str, default: bool = False):
+        super().__init__(classes="flag-row")
+        self.flag = flag
+        self.help_text = help_text
+        self.default = default
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            yield Static("Nuitka Compilation Settings", classes="settings-header")
+        yield Static(self.flag, classes="flag-label")
+        yield Switch(value=self.default, id=f"switch_{self.flag}")
 
-            with ScrollableContainer(classes="scrollable-content"):
-                with Vertical(classes="settings-section"):
-                    yield Label("Build Mode:")
-                    with Horizontal(classes="option-row"):
-                        yield Checkbox(
-                            "Onefile", id="onefile_check", value=self.settings.onefile
-                        )
-                    with Horizontal(classes="option-row"):
-                        yield Checkbox(
-                            "Standalone",
-                            id="standalone_check",
-                            value=self.settings.standalone,
-                        )
+    def get_value(self):
+        switch = self.query_one(f"#switch_{self.flag}", Switch)
+        return switch.value if switch.value != self.default else None
 
-                with Vertical(classes="settings-section"):
-                    yield Label("Runtime Options:")
-                    with Horizontal(classes="option-row"):
-                        yield Checkbox(
-                            "Run after compilation",
-                            id="run_after_check",
-                            value=self.settings.run_after_compilation,
-                        )
-                    with Horizontal(classes="option-row"):
-                        yield Checkbox(
-                            "Disable console window",
-                            id="disable_console_check",
-                            value=self.settings.disable_console,
-                        )
 
-                with Vertical(classes="settings-section"):
-                    yield Label("Build Process:")
-                    with Horizontal(classes="option-row"):
-                        yield Checkbox(
-                            "Assume yes for downloads",
-                            id="assume_yes_check",
-                            value=self.settings.assume_yes_for_downloads,
-                        )
-                    with Horizontal(classes="option-row"):
-                        yield Checkbox(
-                            "Remove output directory",
-                            id="remove_output_check",
-                            value=self.settings.remove_output,
-                        )
-                    with Horizontal(classes="option-row"):
-                        yield Checkbox(
-                            "Show progress",
-                            id="show_progress_check",
-                            value=self.settings.show_progress,
-                        )
-                    with Horizontal(classes="option-row"):
-                        yield Checkbox(
-                            "Show memory usage",
-                            id="show_memory_check",
-                            value=self.settings.show_memory,
-                        )
+class ModalStringFlag(Horizontal):
+    def __init__(self, flag: str, help_text: str, default: str = "", metavar: str = ""):
+        super().__init__(classes="flag-row")
+        self.flag = flag
+        self.help_text = help_text
+        self.default = default
+        self.metavar = metavar
 
-            with Horizontal(classes="settings-controls"):
-                yield Button("Save Settings", variant="success", id="save_button")
-                yield Button("Reset to Defaults", variant="default", id="reset_button")
-                yield Button("Cancel", variant="default", id="cancel_button")
+    def compose(self) -> ComposeResult:
+        yield Static(self.flag, classes="flag-label")
+        yield Input(
+            value=str(self.default) if self.default else "",
+            placeholder=self.metavar or self.flag.upper(),
+            id=f"input_{self.flag}",
+        )
 
-    @on(Checkbox.Changed, "#onefile_check")
-    def on_onefile_changed(self, event: Checkbox.Changed) -> None:
-        if event.value:
-            standalone_check = self.query_one("#standalone_check", Checkbox)
-            standalone_check.value = False
+    def get_value(self):
+        input_widget = self.query_one(f"#input_{self.flag}", Input)
+        value = input_widget.value.strip()
+        return value if value and value != str(self.default) else None
 
-    @on(Checkbox.Changed, "#standalone_check")
-    def on_standalone_changed(self, event: Checkbox.Changed) -> None:
-        if event.value:
-            onefile_check = self.query_one("#onefile_check", Checkbox)
-            onefile_check.value = False
+
+class ModalSelectionFlag(Horizontal):
+    def __init__(self, flag: str, help_text: str, choices: list, default=None):
+        super().__init__(classes="flag-row")
+        self.flag = flag
+        self.help_text = help_text
+        self.choices = choices
+        self.default = default
+
+    def compose(self) -> ComposeResult:
+        yield Static(self.flag, classes="flag-label")
+        options = [(choice, choice) for choice in self.choices]
+        if self.default:
+            initial_option = self.default
+        else:
+            initial_option = Select.BLANK
+        yield Select(options, value=initial_option, id=f"select_{self.flag}")
+
+    def get_value(self):
+        select = self.query_one(f"#select_{self.flag}", Select)
+        return (
+            select.value
+            if select.value != Select.BLANK and select.value != self.default
+            else None
+        )
+
+
+class ModalRadioFlag(Horizontal):
+    def __init__(self, flag: str, help_text: str, choices: list, default=None):
+        super().__init__(classes="flag-row radio-flag")
+        self.flag = flag
+        self.help_text = help_text
+        self.choices = choices
+        self.default = default
+
+    def compose(self) -> ComposeResult:
+        yield Static(self.flag, classes="flag-label")
+        with Vertical(classes="radio-container"):
+            with RadioSet(id=f"radio_{self.flag}"):
+                for choice in self.choices:
+                    yield RadioButton(
+                        choice,
+                        value=(choice == self.default),
+                        id=f"radio_{self.flag}_{choice}",
+                    )
+
+    def get_value(self):
+        radio_set = self.query_one(f"#radio_{self.flag}", RadioSet)
+        if radio_set.pressed_button and radio_set.pressed_button.label:
+            selected_value = str(radio_set.pressed_button.label)
+            return selected_value if selected_value != self.default else None
+        return None
+
+
+class NuitkaSettingsScreen(ModalScreen[dict | None]):
+    CSS_PATH = STYLE_MODAL_SETTINGS
+
+    def __init__(self, initial_settings: dict | None = None):
+        super().__init__()
+        self.current_settings = initial_settings or {}
+        self.flag_widgets: list[ModalBoolFlag | ModalStringFlag | ModalSelectionFlag | ModalRadioFlag] = []
+
+        self.nuitka_options = create_nuitka_options_dict()
+
+    def compose(self) -> ComposeResult:
+        yield Static("Nuitka Settings", classes="settings-header")
+        with TabbedContent():
+            for category, options in self.nuitka_options.items():
+                tab_id = "tab-" + "".join(
+                    c if c.isalnum() else "-" for c in category.lower()
+                ).strip("-")
+                with TabPane(category, id=tab_id):
+                    with ScrollableContainer(classes="scrollable-content"):
+                        for flag, config in options.items():
+                            if self.should_skip_flag(flag, config):
+                                continue
+
+                            widget = self._create_flag_widget(flag, config)
+                            if widget:
+                                self.flag_widgets.append(widget)
+                                yield widget
+
+        with Horizontal(classes="settings-controls"):
+            yield Button("Save", variant="success", id="save_button")
+            yield Button("Cancel", variant="default", id="cancel_button")
+
+    def should_skip_flag(self, flag: str, config: dict) -> bool:
+        skip_flags = {
+            "--help",
+            "-h",
+            "--standalone",
+            "--onefile",
+            "--module",
+            "--version",
+            "--gdb",
+            "--github-workflow-options",
+            "--must-not-re-execute",
+            "--edit-module-code",
+            "--list-package-data",
+            "--list-distribution-metadata",
+            "--list-package-dlls",
+            "--list-package-exe",
+        }
+
+        if flag in skip_flags:
+            return True
+
+        if config.get("action") == "help":
+            return True
+
+        if config.get("help") == "SUPPRESSHELP":
+            return True
+
+        return False
+
+    def _create_flag_widget(self, flag: str, config: dict):
+        action = config.get("action", "store")
+        flag_type = config.get("type")
+        choices = config.get("choices")
+        default = config.get("default")
+        help_text = config.get("help", "")
+        metavar = config.get("metavar", "")
+
+        current_value = self.current_settings.get(flag)
+
+        if action in ["store_true", "store_false"]:
+            widget_default = (
+                current_value
+                if current_value is not None
+                else (default if isinstance(default, bool) else False)
+            )
+            return ModalBoolFlag(flag, help_text, widget_default)
+
+        elif choices:
+            if "mode" in flag.lower() or flag in ["--mode"]:
+                widget_default = current_value if current_value is not None else default
+                return ModalRadioFlag(flag, help_text, choices, widget_default)
+            else:
+                widget_default = current_value if current_value is not None else default
+                return ModalSelectionFlag(flag, help_text, choices, widget_default)
+
+        elif action in ["store", "append"] and flag_type == "string":
+            widget_default = (
+                current_value
+                if current_value is not None
+                else (default if isinstance(default, str) else "")
+            )
+            return ModalStringFlag(flag, help_text, widget_default, metavar)
+
+        return None
 
     @on(Button.Pressed, "#save_button")
     def on_save_pressed(self) -> None:
-        settings = CompilationSettings(
-            onefile=self.query_one("#onefile_check", Checkbox).value,
-            standalone=self.query_one("#standalone_check", Checkbox).value,
-            run_after_compilation=self.query_one("#run_after_check", Checkbox).value,
-            assume_yes_for_downloads=self.query_one(
-                "#assume_yes_check", Checkbox
-            ).value,
-            remove_output=self.query_one("#remove_output_check", Checkbox).value,
-            show_progress=self.query_one("#show_progress_check", Checkbox).value,
-            show_memory=self.query_one("#show_memory_check", Checkbox).value,
-            disable_console=self.query_one("#disable_console_check", Checkbox).value,
-            python_version=self.settings.python_version,  # Keep the existing Python version
-        )
-        self.dismiss(settings)
+        """Collect all settings from flag widgets and return as dict."""
+        settings = {}
 
-    @on(Button.Pressed, "#reset_button")
-    def on_reset_pressed(self) -> None:
-        default_settings = CompilationSettings()
-        self.query_one("#onefile_check", Checkbox).value = default_settings.onefile
-        self.query_one(
-            "#standalone_check", Checkbox
-        ).value = default_settings.standalone
-        self.query_one(
-            "#run_after_check", Checkbox
-        ).value = default_settings.run_after_compilation
-        self.query_one(
-            "#assume_yes_check", Checkbox
-        ).value = default_settings.assume_yes_for_downloads
-        self.query_one(
-            "#remove_output_check", Checkbox
-        ).value = default_settings.remove_output
-        self.query_one(
-            "#show_progress_check", Checkbox
-        ).value = default_settings.show_progress
-        self.query_one(
-            "#show_memory_check", Checkbox
-        ).value = default_settings.show_memory
-        self.query_one(
-            "#disable_console_check", Checkbox
-        ).value = default_settings.disable_console
+        for widget in self.flag_widgets:
+            value = widget.get_value()
+            if value is not None:
+                settings[widget.flag] = value
+
+        self.dismiss(settings)
 
     @on(Button.Pressed, "#cancel_button")
     def on_cancel_pressed(self) -> None:

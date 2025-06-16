@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class CompilationSettings:
     onefile: bool = False
     standalone: bool = False
-    run_after_compilation: bool = False
+    run_after_compilation: bool = True
     assume_yes_for_downloads: bool = False
     remove_output: bool = True
     show_progress: bool = False

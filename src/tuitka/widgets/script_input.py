@@ -31,8 +31,8 @@ class ScriptInput(Input):
 class ScriptInputWidget(Vertical):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.custom_settings = None  # Store custom settings when configured
-    
+        self.custom_settings = None
+
     DEFAULT_CSS = """
     ScriptInputWidget {
         align: center middle;
@@ -128,7 +128,7 @@ class ScriptInputWidget(Vertical):
                     value="3.11",
                     id="python_version_select",
                 )
-        
+
         with Center(classes="button-container"):
             yield Button("Compile", variant="success", id="compile_button")
 
@@ -157,7 +157,9 @@ class ScriptInputWidget(Vertical):
     def on_radio_changed(self, event: RadioSet.Changed) -> None:
         selected_button = event.radio_set.pressed_button
         if selected_button and selected_button.id == "custom_settings":
-            self.app.push_screen(NuitkaSettingsScreen(self.custom_settings), self._handle_custom_settings)
+            self.app.push_screen(
+                NuitkaSettingsScreen(self.custom_settings), self._handle_custom_settings
+            )
         else:
             self.query_one("#compile_button").display = True
 
@@ -176,7 +178,10 @@ class ScriptInputWidget(Vertical):
                 return
 
             if selected_preset.id == "custom_settings" and self.custom_settings:
-                settings = self.custom_settings
+                # Convert custom settings dict to CompilationSettings object
+                settings = self._convert_custom_settings_to_compilation_settings(
+                    self.custom_settings
+                )
             else:
                 settings = get_compilation_settings(selected_preset.id)
 
@@ -191,8 +196,40 @@ class ScriptInputWidget(Vertical):
             self.query_one("#script_input", ScriptInput).value = selected_file
             self.app.script = selected_file
             self.query_one("#settings_radioset").display = True
-    
-    def _handle_custom_settings(self, settings: CompilationSettings | None) -> None:
+
+    def _handle_custom_settings(self, settings: dict | None) -> None:
         if settings:
             self.custom_settings = settings
             self.query_one("#compile_button").display = True
+
+    def _convert_custom_settings_to_compilation_settings(
+        self, custom_settings: dict
+    ) -> CompilationSettings:
+        """Convert custom settings dictionary to CompilationSettings object."""
+        settings = CompilationSettings()
+
+        flag_mapping = {
+            "--onefile": "onefile",
+            "--standalone": "standalone",
+            "--run": "run_after_compilation",
+            "--assume-yes-for-downloads": "assume_yes_for_downloads",
+            "--remove-output": "remove_output",
+            "--show-progress": "show_progress",
+            "--show-memory": "show_memory",
+            "--disable-console": "disable_console",
+        }
+
+        for flag, attr_name in flag_mapping.items():
+            if flag in custom_settings:
+                setattr(settings, attr_name, custom_settings[flag])
+
+        if "--mode" in custom_settings:
+            mode = custom_settings["--mode"]
+            if mode == "onefile":
+                settings.onefile = True
+                settings.standalone = False
+            elif mode == "standalone":
+                settings.standalone = True
+                settings.onefile = False
+
+        return settings
