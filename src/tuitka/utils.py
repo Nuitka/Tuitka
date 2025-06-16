@@ -4,6 +4,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from tuitka.cli_arguments import CompilationSettings
 
+import os
+import sys
+import textwrap
+
+from nuitka.containers.OrderedSets import OrderedSet
+from nuitka.utils.CommandLineOptions import OurOptionParser
+from nuitka.utils.FileOperations import changeTextFileContents
+
 
 @dataclass
 class DependenciesMetadata:
@@ -134,3 +142,19 @@ def prepare_nuitka_command(
 
 
 __all__ = ["prepare_nuitka_command"]
+
+
+
+def _getParser():
+    sys.argv.append("--help-all")
+    from nuitka.OptionParsing import parser
+    from nuitka.plugins.Plugins import addStandardPluginCommandLineOptions
+
+    addStandardPluginCommandLineOptions(parser=parser, plugin_help_mode=True)
+    del sys.argv[-1]
+
+    return parser
+
+
+if __name__ == "__main__":
+    _getParser().print_help()
