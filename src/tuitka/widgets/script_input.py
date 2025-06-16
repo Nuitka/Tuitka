@@ -38,39 +38,46 @@ class ScriptInputWidget(Vertical):
         align: center middle;
         height: 100%;
     }
-    
+
     .input-container {
         margin: 1 0;
         width: 100%;
         align: center middle;
     }
-    
+
     .input-container Input {
         width: 60%;
         max-width: 80;
     }
-    
+
     .button-container {
         margin: 1 0;
     }
-    
+
     .version-label {
         text-align: center;
         margin: 0 0 1 0;
     }
-    
+
     #python_version_select {
-        width: 20%;
-        max-width: 25;
+        width:1fr;
+
+        SelectCurrent {
+            border: none;
+            height: 1;
+        }
+        Static{
+            padding:0;
+            margin:0;
+        }
     }
-    
+
     #settings_options {
         height: auto;
-        width: auto;
+        width: 60%;
         margin: 1 0;
-        max-width: 50%;
     }
-    
+
     #settings_radioset {
         height: auto;
         width: auto;
@@ -79,7 +86,7 @@ class ScriptInputWidget(Vertical):
         background: transparent;
         border: none;
     }
-    
+
     RadioButton {
         width: auto;
         margin: 0 2;
@@ -88,14 +95,14 @@ class ScriptInputWidget(Vertical):
         outline: none;
         text-style: none;
     }
-    
+
     RadioButton:focus {
         background: transparent;
         border: none;
         outline: none;
     }
-    
-    Static {
+
+    ScriptInputWidget > Static {
         text-align: center;
         color: $text-muted;
         margin: 2 0;
@@ -126,6 +133,7 @@ class ScriptInputWidget(Vertical):
                         ("Py 3.12", "3.12"),
                     ],
                     value="3.11",
+                    allow_blank=False,
                     id="python_version_select",
                 )
 
@@ -135,17 +143,18 @@ class ScriptInputWidget(Vertical):
     def on_mount(self) -> None:
         script_input = self.query_one("#script_input", ScriptInput)
         if not script_input.value.strip():
-            self.query_one("#compile_button").display = False
-            self.query_one("#settings_radioset").display = False
+            self.query_one("#compile_button", Button).display = False
+            self.query_one("#settings_radioset", RadioSet).display = False
+            self.query_one("#python_version_select", Select).display = False
 
     @on(Input.Changed, "#script_input")
     def on_script_input_changed(self, event: Input.Changed) -> None:
-        settings_radioset = self.query_one("#settings_radioset")
-        if event.value.strip():
-            settings_radioset.display = True
-        else:
-            self.query_one("#compile_button").display = False
-            settings_radioset.display = False
+        # evaluate if options should show up
+        should_be_visible = bool(event.value.strip())
+
+        self.query_one("#compile_button", Button).display = should_be_visible
+        self.query_one("#settings_radioset", RadioSet).display = should_be_visible
+        self.query_one("#python_version_select", Select).display = should_be_visible
 
     @on(Input.Submitted, "#script_input")
     def on_script_input_submitted(self, event: Input.Submitted) -> None:

@@ -12,7 +12,7 @@ Header {
     color: $text;
 }
 
-/* Footer styling */  
+/* Footer styling */
 Footer {
     background: $surface;
 }
