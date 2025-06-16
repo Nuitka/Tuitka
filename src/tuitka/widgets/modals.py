@@ -7,7 +7,8 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, DirectoryTree, Input, Log, Static
+from textual.widgets import Button, DirectoryTree, Input, Log, Static, Checkbox, Label
+from textual.containers import ScrollableContainer
 
 from tuitka.constants import SPLASHSCREEN_TEXT
 from tuitka.utils import prepare_nuitka_command
@@ -15,6 +16,7 @@ from tuitka.cli_arguments import CompilationSettings
 from tuitka.assets import (
     STYLE_MODAL_FILEDIALOG,
     STYLE_MODAL_COMPILATION,
+    STYLE_MODAL_SETTINGS,
 )
 
 
@@ -141,7 +143,6 @@ class FileDialogScreen(ModalScreen[str | None]):
 
 
 class CompilationScreen(ModalScreen):
-
     CSS_PATH = STYLE_MODAL_COMPILATION
 
     compilation_finished: reactive[bool] = reactive(False, init=False)
@@ -237,3 +238,137 @@ class CompilationScreen(ModalScreen):
 
         if requirements_txt and requirements_txt.exists():
             requirements_txt.unlink()
+
+
+class NuitkaSettingsScreen(ModalScreen[CompilationSettings | None]):
+    """Settings screen for custom Nuitka configuration options."""
+
+    CSS_PATH = STYLE_MODAL_SETTINGS
+
+    def __init__(self, initial_settings: CompilationSettings | None = None):
+        super().__init__()
+        self.settings = initial_settings or CompilationSettings()
+
+    def compose(self) -> ComposeResult:
+        with Vertical():
+            yield Static("Nuitka Compilation Settings", classes="settings-header")
+
+            with ScrollableContainer(classes="scrollable-content"):
+                with Vertical(classes="settings-section"):
+                    yield Label("Build Mode:")
+                    with Horizontal(classes="option-row"):
+                        yield Checkbox(
+                            "Onefile", id="onefile_check", value=self.settings.onefile
+                        )
+                    with Horizontal(classes="option-row"):
+                        yield Checkbox(
+                            "Standalone",
+                            id="standalone_check",
+                            value=self.settings.standalone,
+                        )
+
+                with Vertical(classes="settings-section"):
+                    yield Label("Runtime Options:")
+                    with Horizontal(classes="option-row"):
+                        yield Checkbox(
+                            "Run after compilation",
+                            id="run_after_check",
+                            value=self.settings.run_after_compilation,
+                        )
+                    with Horizontal(classes="option-row"):
+                        yield Checkbox(
+                            "Disable console window",
+                            id="disable_console_check",
+                            value=self.settings.disable_console,
+                        )
+
+                with Vertical(classes="settings-section"):
+                    yield Label("Build Process:")
+                    with Horizontal(classes="option-row"):
+                        yield Checkbox(
+                            "Assume yes for downloads",
+                            id="assume_yes_check",
+                            value=self.settings.assume_yes_for_downloads,
+                        )
+                    with Horizontal(classes="option-row"):
+                        yield Checkbox(
+                            "Remove output directory",
+                            id="remove_output_check",
+                            value=self.settings.remove_output,
+                        )
+                    with Horizontal(classes="option-row"):
+                        yield Checkbox(
+                            "Show progress",
+                            id="show_progress_check",
+                            value=self.settings.show_progress,
+                        )
+                    with Horizontal(classes="option-row"):
+                        yield Checkbox(
+                            "Show memory usage",
+                            id="show_memory_check",
+                            value=self.settings.show_memory,
+                        )
+
+            with Horizontal(classes="settings-controls"):
+                yield Button("Save Settings", variant="success", id="save_button")
+                yield Button("Reset to Defaults", variant="default", id="reset_button")
+                yield Button("Cancel", variant="default", id="cancel_button")
+
+    @on(Checkbox.Changed, "#onefile_check")
+    def on_onefile_changed(self, event: Checkbox.Changed) -> None:
+        if event.value:
+            standalone_check = self.query_one("#standalone_check", Checkbox)
+            standalone_check.value = False
+
+    @on(Checkbox.Changed, "#standalone_check")
+    def on_standalone_changed(self, event: Checkbox.Changed) -> None:
+        if event.value:
+            onefile_check = self.query_one("#onefile_check", Checkbox)
+            onefile_check.value = False
+
+    @on(Button.Pressed, "#save_button")
+    def on_save_pressed(self) -> None:
+        settings = CompilationSettings(
+            onefile=self.query_one("#onefile_check", Checkbox).value,
+            standalone=self.query_one("#standalone_check", Checkbox).value,
+            run_after_compilation=self.query_one("#run_after_check", Checkbox).value,
+            assume_yes_for_downloads=self.query_one(
+                "#assume_yes_check", Checkbox
+            ).value,
+            remove_output=self.query_one("#remove_output_check", Checkbox).value,
+            show_progress=self.query_one("#show_progress_check", Checkbox).value,
+            show_memory=self.query_one("#show_memory_check", Checkbox).value,
+            disable_console=self.query_one("#disable_console_check", Checkbox).value,
+            python_version=self.settings.python_version,  # Keep the existing Python version
+        )
+        self.dismiss(settings)
+
+    @on(Button.Pressed, "#reset_button")
+    def on_reset_pressed(self) -> None:
+        default_settings = CompilationSettings()
+        self.query_one("#onefile_check", Checkbox).value = default_settings.onefile
+        self.query_one(
+            "#standalone_check", Checkbox
+        ).value = default_settings.standalone
+        self.query_one(
+            "#run_after_check", Checkbox
+        ).value = default_settings.run_after_compilation
+        self.query_one(
+            "#assume_yes_check", Checkbox
+        ).value = default_settings.assume_yes_for_downloads
+        self.query_one(
+            "#remove_output_check", Checkbox
+        ).value = default_settings.remove_output
+        self.query_one(
+            "#show_progress_check", Checkbox
+        ).value = default_settings.show_progress
+        self.query_one(
+            "#show_memory_check", Checkbox
+        ).value = default_settings.show_memory
+        self.query_one(
+            "#disable_console_check", Checkbox
+        ).value = default_settings.disable_console
+
+    @on(Button.Pressed, "#cancel_button")
+    def on_cancel_pressed(self) -> None:
+        self.dismiss(None)

@@ -7,9 +7,10 @@ from textual.widgets import RadioButton, RadioSet
 from tuitka.widgets.modals import (
     CompilationScreen,
     FileDialogScreen,
+    NuitkaSettingsScreen,
 )
 
-from tuitka.cli_arguments import get_compilation_settings
+from tuitka.cli_arguments import get_compilation_settings, CompilationSettings
 
 
 class ScriptInput(Input):
@@ -28,6 +29,10 @@ class ScriptInput(Input):
 
 
 class ScriptInputWidget(Vertical):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.custom_settings = None  # Store custom settings when configured
+    
     DEFAULT_CSS = """
     ScriptInputWidget {
         align: center middle;
@@ -150,7 +155,11 @@ class ScriptInputWidget(Vertical):
 
     @on(RadioSet.Changed, "#settings_radioset")
     def on_radio_changed(self, event: RadioSet.Changed) -> None:
-        self.query_one("#compile_button").display = True
+        selected_button = event.radio_set.pressed_button
+        if selected_button and selected_button.id == "custom_settings":
+            self.app.push_screen(NuitkaSettingsScreen(self.custom_settings), self._handle_custom_settings)
+        else:
+            self.query_one("#compile_button").display = True
 
     @on(Button.Pressed, "#browse_button")
     def open_file_dialog(self) -> None:
@@ -166,7 +175,10 @@ class ScriptInputWidget(Vertical):
             if selected_preset is None:
                 return
 
-            settings = get_compilation_settings(selected_preset.id)
+            if selected_preset.id == "custom_settings" and self.custom_settings:
+                settings = self.custom_settings
+            else:
+                settings = get_compilation_settings(selected_preset.id)
 
             # Get the selected Python version
             python_version_select = self.query_one("#python_version_select", Select)
@@ -179,3 +191,8 @@ class ScriptInputWidget(Vertical):
             self.query_one("#script_input", ScriptInput).value = selected_file
             self.app.script = selected_file
             self.query_one("#settings_radioset").display = True
+    
+    def _handle_custom_settings(self, settings: CompilationSettings | None) -> None:
+        if settings:
+            self.custom_settings = settings
+            self.query_one("#compile_button").display = True
