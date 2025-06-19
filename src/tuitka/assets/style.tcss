@@ -1,23 +1,16 @@
-
-/* Minimalistic TUI styling for Tuitka */
-
-/* Global app styles */
 Screen {
     background: $background;
 }
 
-/* Header styling */
 Header {
     background: $primary;
     color: $text;
 }
 
-/* Footer styling */
 Footer {
     background: $surface;
 }
 
-/* Button improvements */
 Button {
     margin: 0 1;
 }
@@ -27,14 +20,12 @@ Button:hover {
 }
 
 
-/* Log output styling */
 Log {
     background: $surface;
     scrollbar-background: $surface;
     scrollbar-color: $primary;
 }
 
-/* Directory tree styling */
 DirectoryTree {
     background: $surface;
 }
