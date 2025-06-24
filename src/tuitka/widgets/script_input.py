@@ -59,32 +59,38 @@ class ScriptInputWidget(Vertical):
         margin: 0 0 1 0;
     }
 
-    #python_version_select {
-        width:1fr;
-
-        SelectCurrent {
-            border: none;
-            height: 1;
-        }
-        Static{
-            padding:0;
-            margin:0;
-        }
+    #compilation_options_container {
+        border: round $panel-lighten-2;
+        width: 60%;
+        height: auto;
+        padding: 1 2;
+        margin-top: 1;
     }
 
-    #settings_options {
-        height: auto;
-        width: 60%;
-        margin: 1 0;
+    .group_title {
+        text-align: center;
+        text-style: bold;
+        margin-bottom: 1;
+    }
+
+    .sub_title {
+        margin-top: 1;
+        color: $text-muted;
+    }
+
+    #python_version_select {
+        width: 100%;
+        margin-top: 1;
     }
 
     #settings_radioset {
         height: auto;
-        width: auto;
-        padding: 0;
+        width: 100%;
         layout: horizontal;
         background: transparent;
         border: none;
+        align: center middle;
+        margin-top: 1;
     }
 
     RadioButton {
@@ -119,18 +125,21 @@ class ScriptInputWidget(Vertical):
             yield Button("Browse Files", variant="primary", id="browse_button")
 
         with Center():
-            with Horizontal(id="settings_options"):
+            with Vertical(id="compilation_options_container"):
+                yield Static("Compilation Options", classes="group_title")
+                yield Static("Presets", classes="sub_title")
                 with RadioSet(id="settings_radioset"):
-                    yield RadioButton("Onefile Preset", id="onefile_preset")
-                    yield RadioButton("Standalone Preset", id="standalone_preset")
-                    yield RadioButton("Custom Settings", id="custom_settings")
+                    yield RadioButton("Onefile", id="onefile_preset", value=True)
+                    yield RadioButton("Standalone", id="standalone_preset")
+                    yield RadioButton("Custom", id="custom_settings")
+                yield Static("Python Version", classes="sub_title")
                 yield Select(
                     [
-                        ("Py 3.8", "3.8"),
-                        ("Py 3.9", "3.9"),
-                        ("Py 3.10", "3.10"),
-                        ("Py 3.11", "3.11"),
-                        ("Py 3.12", "3.12"),
+                        ("3.8", "3.8"),
+                        ("3.9", "3.9"),
+                        ("3.10", "3.10"),
+                        ("3.11", "3.11"),
+                        ("3.12", "3.12"),
                     ],
                     value="3.11",
                     allow_blank=False,
@@ -144,8 +153,7 @@ class ScriptInputWidget(Vertical):
         script_input = self.query_one("#script_input", ScriptInput)
         if not script_input.value.strip():
             self.query_one("#compile_button", Button).display = False
-            self.query_one("#settings_radioset", RadioSet).display = False
-            self.query_one("#python_version_select", Select).display = False
+            self.query_one("#compilation_options_container").display = False
 
     @on(Input.Changed, "#script_input")
     def on_script_input_changed(self, event: Input.Changed) -> None:
@@ -153,8 +161,7 @@ class ScriptInputWidget(Vertical):
         should_be_visible = bool(event.value.strip())
 
         self.query_one("#compile_button", Button).display = should_be_visible
-        self.query_one("#settings_radioset", RadioSet).display = should_be_visible
-        self.query_one("#python_version_select", Select).display = should_be_visible
+        self.query_one("#compilation_options_container").display = should_be_visible
 
     @on(Input.Submitted, "#script_input")
     def on_script_input_submitted(self, event: Input.Submitted) -> None:
@@ -187,14 +194,12 @@ class ScriptInputWidget(Vertical):
                 return
 
             if selected_preset.id == "custom_settings" and self.custom_settings:
-                # Convert custom settings dict to CompilationSettings object
                 settings = self._convert_custom_settings_to_compilation_settings(
                     self.custom_settings
                 )
             else:
                 settings = get_compilation_settings(selected_preset.id)
 
-            # Get the selected Python version
             python_version_select = self.query_one("#python_version_select", Select)
             settings.python_version = python_version_select.value
 
@@ -204,7 +209,7 @@ class ScriptInputWidget(Vertical):
         if selected_file:
             self.query_one("#script_input", ScriptInput).value = selected_file
             self.app.script = selected_file
-            self.query_one("#settings_radioset").display = True
+            self.query_one("#compilation_options_container").display = True
 
     def _handle_custom_settings(self, settings: dict | None) -> None:
         if settings:

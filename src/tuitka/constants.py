@@ -55,7 +55,7 @@ mythical_snek = r"""
 
 """
 
-flavor_of_snek = choice(
+SNAKE_ART = choice(
     [
         sss_snek,
         happy_snek_2,
@@ -64,14 +64,7 @@ flavor_of_snek = choice(
         mythical_snek,
     ]
 )
-SPLASHSCREEN_TEXT = rf"""
-{flavor_of_snek}
-
-Nuitka Github
-[#fbdd58 underline]https://github.com/Nuitka/Nuitka[/]
-
-
-Tuitka Github
-[#fbdd58 underline]https://github.com/KRRT7/tuitka[/]
-
-"""
+SPLASHSCREEN_LINKS = (
+    "\n\nNuitka Github: \n\n[#fbdd58 underline]https://github.com/Nuitka/Nuitka[/]\n\n"
+    "Tuitka Github: \n\n[#fbdd58 underline]https://github.com/KRRT7/tuitka[/]"
+)

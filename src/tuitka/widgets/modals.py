@@ -4,9 +4,10 @@ from typing import Iterable
 
 from textual import on, work
 from textual.app import ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Grid, Horizontal, ScrollableContainer, Vertical
 from textual.reactive import reactive
 from textual.screen import ModalScreen
+from textual.message import Message
 from textual.widgets import (
     Button,
     DirectoryTree,
@@ -17,18 +18,17 @@ from textual.widgets import (
     Select,
     Static,
     Switch,
-    TabbedContent,
-    TabPane,
+    Collapsible,
 )
-from textual.containers import ScrollableContainer
 
-from tuitka.constants import SPLASHSCREEN_TEXT
+from tuitka.constants import SNAKE_ART, SPLASHSCREEN_LINKS
 from tuitka.utils import prepare_nuitka_command, create_nuitka_options_dict
 from tuitka.cli_arguments import CompilationSettings
 from tuitka.assets import (
     STYLE_MODAL_FILEDIALOG,
     STYLE_MODAL_COMPILATION,
     STYLE_MODAL_SETTINGS,
+    STYLE_MODAL_SPLASHSCREEN,
 )
 
 
@@ -37,38 +37,28 @@ class OutputLogger(Log):
 
 
 class SplashScreen(ModalScreen):
-    DEFAULT_CSS = """
-    SplashScreen {
-        align: center middle;
-    }
-    
-    #splash-dialog {
-        width: 70;
-        height: 20;
-        padding: 2;
-    }
-    
-    #splash-content {
-        text-align: center;
-        content-align: center middle;
-        height: 1fr;
-    }
+    CSS_PATH = STYLE_MODAL_SPLASHSCREEN
 
-    .continue-text {
-        color: $text-muted;
-        text-align: center;
-        margin: 1 0 0 0;
-    }
-
-    """
+    class Dismiss(Message):
+        pass
 
     def compose(self) -> ComposeResult:
         with Vertical(id="splash-dialog"):
-            yield Static(SPLASHSCREEN_TEXT, id="splash-content")
-            yield Static("Press any key to continue...", classes="continue-text")
+            with Vertical(id="splash-content"):
+                yield Static(SNAKE_ART, id="splash-art")
+                yield Static(SPLASHSCREEN_LINKS, id="splash-links")
+            yield Static("Press any key to skip...", classes="continue-text")
+
+    def on_mount(self) -> None:
+        self.set_timer(3, self._on_timer)
+
+    def _on_timer(self) -> None:
+        self.post_message(self.Dismiss())
 
     def on_key(self) -> None:
-        """Dismiss on any key press."""
+        self.post_message(self.Dismiss())
+
+    def on_splash_screen_dismiss(self, _: "SplashScreen.Dismiss") -> None:
         self.dismiss()
 
 
@@ -252,34 +242,42 @@ class CompilationScreen(ModalScreen):
             requirements_txt.unlink()
 
 
-class ModalBoolFlag(Horizontal):
+class ModalBoolFlag(Grid):
     def __init__(self, flag: str, help_text: str, default: bool = False):
-        super().__init__(classes="flag-row")
+        super().__init__()
         self.flag = flag
         self.help_text = help_text
         self.default = default
+        self.initial_value = default
 
     def compose(self) -> ComposeResult:
-        yield Static(self.flag, classes="flag-label")
-        yield Switch(value=self.default, id=f"switch_{self.flag}")
+        yield Static(self.flag)
+        yield Switch(value=self.initial_value, id=f"switch_{self.flag}")
 
     def get_value(self):
         switch = self.query_one(f"#switch_{self.flag}", Switch)
         return switch.value if switch.value != self.default else None
 
+    def is_changed(self) -> bool:
+        return self.query_one(Switch).value != self.initial_value
 
-class ModalStringFlag(Horizontal):
+    def reset(self) -> None:
+        self.query_one(Switch).value = self.initial_value
+
+
+class ModalStringFlag(Grid):
     def __init__(self, flag: str, help_text: str, default: str = "", metavar: str = ""):
-        super().__init__(classes="flag-row")
+        super().__init__()
         self.flag = flag
         self.help_text = help_text
         self.default = default
+        self.initial_value = default
         self.metavar = metavar
 
     def compose(self) -> ComposeResult:
-        yield Static(self.flag, classes="flag-label")
+        yield Static(self.flag)
         yield Input(
-            value=str(self.default) if self.default else "",
+            value=str(self.initial_value) if self.initial_value else "",
             placeholder=self.metavar or self.flag.upper(),
             id=f"input_{self.flag}",
         )
@@ -289,20 +287,27 @@ class ModalStringFlag(Horizontal):
         value = input_widget.value.strip()
         return value if value and value != str(self.default) else None
 
+    def is_changed(self) -> bool:
+        return self.query_one(Input).value != self.initial_value
 
-class ModalSelectionFlag(Horizontal):
+    def reset(self) -> None:
+        self.query_one(Input).value = self.initial_value
+
+
+class ModalSelectionFlag(Grid):
     def __init__(self, flag: str, help_text: str, choices: list, default=None):
-        super().__init__(classes="flag-row")
+        super().__init__()
         self.flag = flag
         self.help_text = help_text
         self.choices = choices
         self.default = default
+        self.initial_value = default
 
     def compose(self) -> ComposeResult:
-        yield Static(self.flag, classes="flag-label")
+        yield Static(self.flag)
         options = [(choice, choice) for choice in self.choices]
-        if self.default:
-            initial_option = self.default
+        if self.initial_value:
+            initial_option = self.initial_value
         else:
             initial_option = Select.BLANK
         yield Select(options, value=initial_option, id=f"select_{self.flag}")
@@ -315,23 +320,30 @@ class ModalSelectionFlag(Horizontal):
             else None
         )
 
+    def is_changed(self) -> bool:
+        return self.query_one(Select).value != self.initial_value
 
-class ModalRadioFlag(Horizontal):
+    def reset(self) -> None:
+        self.query_one(Select).value = self.initial_value
+
+
+class ModalRadioFlag(Grid):
     def __init__(self, flag: str, help_text: str, choices: list, default=None):
-        super().__init__(classes="flag-row radio-flag")
+        super().__init__()
         self.flag = flag
         self.help_text = help_text
         self.choices = choices
         self.default = default
+        self.initial_value = default
 
     def compose(self) -> ComposeResult:
-        yield Static(self.flag, classes="flag-label")
-        with Vertical(classes="radio-container"):
+        yield Static(self.flag)
+        with Vertical():
             with RadioSet(id=f"radio_{self.flag}"):
                 for choice in self.choices:
                     yield RadioButton(
                         choice,
-                        value=(choice == self.default),
+                        value=(choice == self.initial_value),
                         id=f"radio_{self.flag}_{choice}",
                     )
 
@@ -342,6 +354,17 @@ class ModalRadioFlag(Horizontal):
             return selected_value if selected_value != self.default else None
         return None
 
+    def is_changed(self) -> bool:
+        radio_set = self.query_one(RadioSet)
+        if radio_set.pressed_button:
+            return str(radio_set.pressed_button.label) != self.initial_value
+        return self.initial_value is not None
+
+    def reset(self) -> None:
+        radio_set = self.query_one(RadioSet)
+        for button in radio_set.query(RadioButton):
+            button.value = str(button.label) == self.initial_value
+
 
 class NuitkaSettingsScreen(ModalScreen[dict | None]):
     CSS_PATH = STYLE_MODAL_SETTINGS
@@ -349,31 +372,35 @@ class NuitkaSettingsScreen(ModalScreen[dict | None]):
     def __init__(self, initial_settings: dict | None = None):
         super().__init__()
         self.current_settings = initial_settings or {}
-        self.flag_widgets: list[ModalBoolFlag | ModalStringFlag | ModalSelectionFlag | ModalRadioFlag] = []
+        self.flag_widgets: list[
+            ModalBoolFlag | ModalStringFlag | ModalSelectionFlag | ModalRadioFlag
+        ] = []
 
         self.nuitka_options = create_nuitka_options_dict()
 
     def compose(self) -> ComposeResult:
         yield Static("Nuitka Settings", classes="settings-header")
-        with TabbedContent():
+        with Horizontal(id="filter-controls"):
+            yield Input(
+                placeholder="Search settings...",
+                id="search_input",
+                classes="filter-input",
+            )
+        with ScrollableContainer(id="settings-container"):
             for category, options in self.nuitka_options.items():
-                tab_id = "tab-" + "".join(
-                    c if c.isalnum() else "-" for c in category.lower()
-                ).strip("-")
-                with TabPane(category, id=tab_id):
-                    with ScrollableContainer(classes="scrollable-content"):
-                        for flag, config in options.items():
-                            if self.should_skip_flag(flag, config):
-                                continue
+                with Collapsible(title=category):
+                    for flag, config in options.items():
+                        if self.should_skip_flag(flag, config):
+                            continue
 
-                            widget = self._create_flag_widget(flag, config)
-                            if widget:
-                                self.flag_widgets.append(widget)
-                                yield widget
+                        widget = self._create_flag_widget(flag, config)
+                        if widget:
+                            self.flag_widgets.append(widget)
+                            yield widget
 
         with Horizontal(classes="settings-controls"):
             yield Button("Save", variant="success", id="save_button")
-            yield Button("Cancel", variant="default", id="cancel_button")
+            yield Button("Cancel", variant="error", id="cancel_button")
 
     def should_skip_flag(self, flag: str, config: dict) -> bool:
         skip_flags = {
@@ -420,15 +447,21 @@ class NuitkaSettingsScreen(ModalScreen[dict | None]):
                 if current_value is not None
                 else (default if isinstance(default, bool) else False)
             )
-            return ModalBoolFlag(flag, help_text, widget_default)
+            widget = ModalBoolFlag(flag, help_text, widget_default)
+            widget.tooltip = help_text
+            return widget
 
         elif choices:
             if "mode" in flag.lower() or flag in ["--mode"]:
                 widget_default = current_value if current_value is not None else default
-                return ModalRadioFlag(flag, help_text, choices, widget_default)
+                widget = ModalRadioFlag(flag, help_text, choices, widget_default)
+                widget.tooltip = help_text
+                return widget
             else:
                 widget_default = current_value if current_value is not None else default
-                return ModalSelectionFlag(flag, help_text, choices, widget_default)
+                widget = ModalSelectionFlag(flag, help_text, choices, widget_default)
+                widget.tooltip = help_text
+                return widget
 
         elif action in ["store", "append"] and flag_type == "string":
             widget_default = (
@@ -436,9 +469,56 @@ class NuitkaSettingsScreen(ModalScreen[dict | None]):
                 if current_value is not None
                 else (default if isinstance(default, str) else "")
             )
-            return ModalStringFlag(flag, help_text, widget_default, metavar)
+            widget = ModalStringFlag(flag, help_text, widget_default, metavar)
+            widget.tooltip = help_text
+            return widget
 
         return None
+
+    @on(Input.Changed, "#search_input")
+    def on_search_changed(self, event: Input.Changed) -> None:
+        """Filter settings based on search input."""
+        search_term = event.value.lower().strip()
+        self.filter_settings(search_term)
+
+    def filter_settings(self, search_term: str) -> None:
+        """Filter settings based on search term."""
+        query_selector = (
+            "ModalBoolFlag, ModalStringFlag, ModalSelectionFlag, ModalRadioFlag"
+        )
+        all_widgets = self.query(query_selector)
+        all_collapsibles = self.query(Collapsible)
+
+        if not search_term:
+            for widget in all_widgets:
+                widget.display = True
+            for collapsible in all_collapsibles:
+                collapsible.display = True
+                collapsible.collapsed = True
+            self.query_one("#settings-container", ScrollableContainer).scroll_home(
+                animate=False
+            )
+            return
+
+        for collapsible in all_collapsibles:
+            collapsible.display = False
+
+        for widget in all_widgets:
+            match = (
+                search_term in widget.flag.lower()
+                or search_term in widget.help_text.lower()
+            )
+            widget.display = match
+            if match:
+                parent = widget.parent
+                while parent is not None and not isinstance(parent, Collapsible):
+                    parent = parent.parent
+                if parent is not None:
+                    parent.display = True
+                    parent.collapsed = False
+        self.query_one("#settings-container", ScrollableContainer).scroll_home(
+            animate=False
+        )
 
     @on(Button.Pressed, "#save_button")
     def on_save_pressed(self) -> None:

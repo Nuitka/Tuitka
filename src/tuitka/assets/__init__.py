@@ -10,6 +10,7 @@ STYLE_MAIN = get_asset_path("style.tcss")
 STYLE_MODAL_FILEDIALOG = get_asset_path("style_modal_filedialog.tcss")
 STYLE_MODAL_COMPILATION = get_asset_path("style_modal_compilation.tcss")
 STYLE_MODAL_SETTINGS = get_asset_path("style_modal_settings.tcss")
+STYLE_MODAL_SPLASHSCREEN = get_asset_path("style_modal_splashscreen.tcss")
 
 __all__ = [
     "get_asset_path",
@@ -17,4 +18,5 @@ __all__ = [
     "STYLE_MODAL_FILEDIALOG",
     "STYLE_MODAL_COMPILATION",
     "STYLE_MODAL_SETTINGS",
+    "STYLE_MODAL_SPLASHSCREEN",
 ]
