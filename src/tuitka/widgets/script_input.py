@@ -1,6 +1,6 @@
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, Vertical, Horizontal
+from textual.containers import Center, Vertical
 from textual.widgets import Button, Input, Static, Select
 from textual.widgets import RadioButton, RadioSet
 
@@ -9,8 +9,6 @@ from tuitka.widgets.modals import (
     FileDialogScreen,
     NuitkaSettingsScreen,
 )
-
-from tuitka.cli_arguments import get_compilation_settings, CompilationSettings
 
 
 class ScriptInput(Input):
@@ -193,17 +191,18 @@ class ScriptInputWidget(Vertical):
             if selected_preset is None:
                 return
 
-            if selected_preset.id == "custom_settings" and self.custom_settings:
-                settings = self._convert_custom_settings_to_compilation_settings(
-                    self.custom_settings
-                )
-            else:
-                settings = get_compilation_settings(selected_preset.id)
-
             python_version_select = self.query_one("#python_version_select", Select)
-            settings.python_version = python_version_select.value
+            python_version = python_version_select.value
 
-            self.app.push_screen(CompilationScreen(settings))
+            nuitka_options = {}
+            if selected_preset.id == "onefile_preset":
+                nuitka_options["--onefile"] = True
+            elif selected_preset.id == "standalone_preset":
+                nuitka_options["--standalone"] = True
+            elif selected_preset.id == "custom_settings" and self.custom_settings:
+                nuitka_options = self.custom_settings
+
+            self.app.push_screen(CompilationScreen(python_version, **nuitka_options))
 
     def _handle_file_selection(self, selected_file: str | None) -> None:
         if selected_file:
@@ -215,35 +214,3 @@ class ScriptInputWidget(Vertical):
         if settings:
             self.custom_settings = settings
             self.query_one("#compile_button").display = True
-
-    def _convert_custom_settings_to_compilation_settings(
-        self, custom_settings: dict
-    ) -> CompilationSettings:
-        """Convert custom settings dictionary to CompilationSettings object."""
-        settings = CompilationSettings()
-
-        flag_mapping = {
-            "--onefile": "onefile",
-            "--standalone": "standalone",
-            "--run": "run_after_compilation",
-            "--assume-yes-for-downloads": "assume_yes_for_downloads",
-            "--remove-output": "remove_output",
-            "--show-progress": "show_progress",
-            "--show-memory": "show_memory",
-            "--disable-console": "disable_console",
-        }
-
-        for flag, attr_name in flag_mapping.items():
-            if flag in custom_settings:
-                setattr(settings, attr_name, custom_settings[flag])
-
-        if "--mode" in custom_settings:
-            mode = custom_settings["--mode"]
-            if mode == "onefile":
-                settings.onefile = True
-                settings.standalone = False
-            elif mode == "standalone":
-                settings.standalone = True
-                settings.onefile = False
-
-        return settings

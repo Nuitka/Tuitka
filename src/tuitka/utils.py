@@ -2,7 +2,6 @@ import re
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-from tuitka.cli_arguments import CompilationSettings
 
 import sys
 
@@ -109,8 +108,7 @@ def parse_dependencies(_path: str | Path) -> DependenciesMetadata:
 
 
 def prepare_nuitka_command(
-    script_path: Path,
-    settings: CompilationSettings,
+    script_path: Path, python_version: str = "3.11", **nuitka_options
 ) -> tuple[list[str], Path | None]:
     dependencies_metadata = parse_dependencies(script_path)
     requirements_file = None
@@ -118,7 +116,7 @@ def prepare_nuitka_command(
     cmd = [
         "uvx",
         "--python",
-        settings.python_version,
+        python_version,
         "--isolated",
     ]
 
@@ -128,14 +126,21 @@ def prepare_nuitka_command(
 
     cmd.append("nuitka")
 
-    cmd.extend(settings.to_nuitka_args())
+    for flag, value in nuitka_options.items():
+        if value is None:
+            continue
+        if isinstance(value, bool) and value:
+            cmd.append(flag)
+        elif isinstance(value, str) and value.strip():
+            cmd.append(f"{flag}={value.strip()}")
+        elif isinstance(value, (list, tuple)) and value:
+            for item in value:
+                if isinstance(item, str) and item.strip():
+                    cmd.append(f"{flag}={item.strip()}")
 
     cmd.append(script_path.as_posix())
 
     return cmd, requirements_file
-
-
-__all__ = ["prepare_nuitka_command", "create_nuitka_options_dict"]
 
 
 def create_nuitka_options_dict() -> dict[str, dict[str, dict]]:
@@ -200,6 +205,9 @@ def create_nuitka_options_dict() -> dict[str, dict[str, dict]]:
         options_dict[group_name] = group_options
 
     return options_dict
+
+
+__all__ = ["prepare_nuitka_command", "create_nuitka_options_dict"]
 
 
 if __name__ == "__main__":

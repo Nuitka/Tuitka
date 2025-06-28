@@ -23,7 +23,6 @@ from textual.widgets import (
 
 from tuitka.constants import SNAKE_ART, SPLASHSCREEN_LINKS
 from tuitka.utils import prepare_nuitka_command, create_nuitka_options_dict
-from tuitka.cli_arguments import CompilationSettings
 from tuitka.assets import (
     STYLE_MODAL_FILEDIALOG,
     STYLE_MODAL_COMPILATION,
@@ -150,9 +149,10 @@ class CompilationScreen(ModalScreen):
     compilation_finished: reactive[bool] = reactive(False, init=False)
     compilation_success: reactive[bool] = reactive(False, init=False)
 
-    def __init__(self, settings: CompilationSettings) -> None:
+    def __init__(self, python_version: str = "3.11", **nuitka_options) -> None:
         super().__init__()
-        self.settings = settings
+        self.python_version = python_version
+        self.nuitka_options = nuitka_options
 
     def compose(self) -> ComposeResult:
         with Vertical():
@@ -201,7 +201,7 @@ class CompilationScreen(ModalScreen):
 
         self.app.call_from_thread(log.clear)
         cmd, requirements_txt = prepare_nuitka_command(
-            Path(self.app.script), self.settings
+            Path(self.app.script), self.python_version, **self.nuitka_options
         )
 
         try:
@@ -243,11 +243,20 @@ class CompilationScreen(ModalScreen):
 
 
 class ModalBoolFlag(Grid):
-    def __init__(self, flag: str, help_text: str, default: bool = False):
+    def __init__(
+        self,
+        flag: str,
+        help_text: str,
+        default: bool = False,
+        action: str = "store_true",
+        nuitka_default: bool | None = None,
+    ):
         super().__init__()
         self.flag = flag
         self.help_text = help_text
         self.default = default
+        self.action = action
+        self.nuitka_default = nuitka_default
         self.initial_value = default
 
     def compose(self) -> ComposeResult:
@@ -256,7 +265,10 @@ class ModalBoolFlag(Grid):
 
     def get_value(self):
         switch = self.query_one(f"#switch_{self.flag}", Switch)
-        return switch.value if switch.value != self.default else None
+        if self.action == "store_false":
+            return not switch.value if switch.value != self.default else None
+        else:
+            return switch.value if switch.value != self.default else None
 
     def is_changed(self) -> bool:
         return self.query_one(Switch).value != self.initial_value
@@ -406,18 +418,10 @@ class NuitkaSettingsScreen(ModalScreen[dict | None]):
         skip_flags = {
             "--help",
             "-h",
-            "--standalone",
-            "--onefile",
             "--module",
             "--version",
-            "--gdb",
-            "--github-workflow-options",
-            "--must-not-re-execute",
-            "--edit-module-code",
-            "--list-package-data",
-            "--list-distribution-metadata",
-            "--list-package-dlls",
-            "--list-package-exe",
+            "--standalone",
+            "--onefile",
         }
 
         if flag in skip_flags:
@@ -447,7 +451,9 @@ class NuitkaSettingsScreen(ModalScreen[dict | None]):
                 if current_value is not None
                 else (default if isinstance(default, bool) else False)
             )
-            widget = ModalBoolFlag(flag, help_text, widget_default)
+            widget = ModalBoolFlag(
+                flag, help_text, widget_default, action=action, nuitka_default=default
+            )
             widget.tooltip = help_text
             return widget
 
