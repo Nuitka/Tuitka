@@ -225,6 +225,7 @@ class CompilationScreen(ModalScreen):
         super().__init__()
         self.python_version = python_version
         self.nuitka_options = nuitka_options
+        self.process = None
 
     def compose(self) -> ComposeResult:
         with Vertical():
@@ -243,7 +244,7 @@ class CompilationScreen(ModalScreen):
         if event.button.id == "btn_close":
             self.dismiss()
         elif event.button.id == "btn_cancel":
-            # TODO: Implement process cancellation
+            self.cancel_compilation()
             self.dismiss()
 
     def watch_compilation_finished(self, finished: bool) -> None:
@@ -267,6 +268,10 @@ class CompilationScreen(ModalScreen):
     def on_mount(self) -> None:
         self.run_compilation()
 
+    def cancel_compilation(self) -> None:
+        if self.process and self.process.returncode is None:
+            self.process.terminate()
+
     @work(thread=True, exclusive=True)
     async def run_compilation(self) -> None:
         log = self.query_one("#output_log", OutputLogger)
@@ -285,11 +290,12 @@ class CompilationScreen(ModalScreen):
         self.app.call_from_thread(log.write_line, cmd_display)
         self.app.call_from_thread(log.write_line, "")
 
-        process = await asyncio.create_subprocess_shell(
+        self.process = await asyncio.create_subprocess_shell(
             " ".join(cmd),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
+        process = self.process
 
         while True:
             if process.returncode is not None:
