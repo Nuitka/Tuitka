@@ -1,7 +1,7 @@
-from tuitka.app import NuitkaTUI
+from tuitka.tui import NuitkaTUI
 
 
 def main() -> None:
+    """Launch the Tuitka TUI application."""
     app = NuitkaTUI()
     app.run()
-    # print("Hello from tuitka!")

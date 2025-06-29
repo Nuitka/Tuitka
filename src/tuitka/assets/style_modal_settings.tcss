@@ -1,0 +1,130 @@
+NuitkaSettingsScreen {
+    width: 100%;
+    height: 100%;
+}
+
+NuitkaSettingsScreen > Vertical {
+    width: 100%;
+    height: 100%;
+    background: $surface;
+    border: solid $surface-lighten-1;
+}
+
+.settings-header {
+    text-align: center;
+    margin: 0 0 2 0;
+    color: $text;
+    text-style: bold;
+    width: 100%;
+}
+
+#filter-controls {
+    height: auto;
+    align: left middle;
+    padding: 0 1;
+}
+
+.filter-input {
+    width: 1fr;
+}
+
+.filter-switch {
+    width: auto;
+    margin: 0 1;
+}
+
+.filter-label {
+    width: auto;
+}
+
+#search_input {
+    margin: 0 0 1 0;
+}
+
+.settings-description {
+    margin: 0 0 2 0;
+    color: $text;
+}
+
+.category-header {
+    color: $accent;
+    text-style: bold;
+    margin: 1 0 1 0;
+    padding: 0 0 0 1;
+}
+
+Collapsible {
+    margin: 1 0;
+}
+
+Collapsible > .collapsible-title {
+    background: $primary-darken-2;
+    padding: 1;
+    text-style: bold;
+}
+
+Collapsible.collapsible--collapsed > .collapsible-title {
+    background: $primary;
+}
+
+.settings-group {
+    border: round $primary-lighten-2;
+    margin: 1 0;
+    padding: 1;
+}
+
+.settings-group-title {
+    text-style: bold;
+    margin: 0 0 1 0;
+}
+
+#settings-container {
+    height: 1fr;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.settings-controls {
+    margin: 2 0 0 0;
+    height: auto;
+}
+
+.settings-controls Button {
+    width: 1fr;
+    margin: 0 1;
+}
+
+ModalBoolFlag, ModalStringFlag, ModalSelectionFlag, ModalRadioFlag {
+    margin: 1 0;
+    width: 1fr;
+    height: auto;
+    align: left middle;
+    padding: 1;
+    grid-size: 2;
+    grid-columns: 40% 1fr;
+}
+
+ModalBoolFlag.changed,
+ModalStringFlag.changed,
+ModalSelectionFlag.changed,
+ModalRadioFlag.changed {
+    background: $primary-lighten-3;
+}
+
+ModalBoolFlag > Static,
+ModalStringFlag > Static,
+ModalSelectionFlag > Static,
+ModalRadioFlag > Static {
+    color: $text;
+    padding: 0 2 0 0;
+}
+
+ModalBoolFlag Switch {
+    width: auto;
+}
+
+ModalStringFlag Input, ModalSelectionFlag Select, ModalSelectionFlag Input {
+    width: 1fr;
+}
+

@@ -1,0 +1,70 @@
+ModalScreen {
+    align: center middle;
+
+    Vertical {
+        width: 90%;
+        max-width: 140;
+        height: 80%;
+        max-height: 35;
+        min-height: 20;
+        padding: 1;
+        background: $surface;
+    }
+
+    .compilation-header {
+        height: 3;
+        text-align: center;
+        margin: 0 0 1 0;
+        color: $accent;
+        text-style: bold;
+    }
+
+    .command-display {
+        height: 4;
+        width: 1fr;
+        text-align: left;
+        color: $text;
+        margin: 0 0 1 0;
+        padding: 1;
+        background: $surface-lighten-1;
+        border: solid $border;
+        overflow-y: auto;
+    }
+
+    OutputLogger {
+        height: 1fr;
+        border: solid $primary;
+        margin: 0 0 1 0;
+    }
+
+    .compilation-status {
+        height: 1;
+        text-align: center;
+        margin: 0 0 1 0;
+    }
+
+    .compilation-controls {
+        height: 3;
+        margin: 0;
+    }
+
+    .compilation-controls Button {
+        width: 1fr;
+        height: 3;
+    }
+
+    .success {
+        color: $success;
+        text-style: bold;
+    }
+
+    .error {
+        color: $error;
+        text-style: bold;
+    }
+
+    .in-progress {
+        color: $warning;
+        text-style: bold;
+    }
+}

@@ -1,0 +1,32 @@
+SplashScreen {
+    align: center middle;
+}
+
+#splash-dialog {
+    width: 70;
+    height: 25;
+    padding: 2;
+}
+
+#splash-content {
+    align: center middle;
+    text-align: center;
+    content-align: center middle;
+    height: 1fr;
+}
+
+#splash-art {
+    text-align: center;
+    height: 1fr;
+}
+
+#splash-links {
+    text-align: center;
+    height: auto;
+}
+
+.continue-text {
+    color: $text-muted;
+    text-align: center;
+    margin: 1 0 0 0;
+}

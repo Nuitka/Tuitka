@@ -1,15 +1,17 @@
 [project]
 name = "tuitka"
 version = "0.1.0"
-description = "Add your description here"
+description = "A TUI Frontend for Nuitka - The Python Compiler"
 readme = "README.md"
 authors = [
+    { name = "KRRT7", email = "turcioskevinr@gmail.com" },
     { name = "Zaloog", email = "gramslars@gmail.com" }
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "rich-pixels>=3.0.1",
-    "textual>=2.0.0",
+    "nuitka>=2.7.7",
+    "textual>=3.2.0",
+    "uv>=0.7.3",
 ]
 
 [project.scripts]
@@ -24,5 +26,6 @@ dev = [
     "pre-commit>=4.1.0",
     "pre-commit-uv>=4.1.4",
     "pytest>=8.3.4",
+    "ruff>=0.11.13",
     "textual-dev>=1.7.0",
 ]
