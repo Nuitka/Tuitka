@@ -30,7 +30,6 @@ from tuitka.constants import (
 from tuitka.utils import (
     prepare_nuitka_command,
     create_nuitka_options_dict,
-    DependencySource,
 )
 from tuitka.assets import (
     STYLE_MODAL_FILEDIALOG,

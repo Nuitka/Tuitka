@@ -70,7 +70,6 @@ class DependencyParser:
         dependencies = tomllib.loads(content).get("dependencies", [])
         return DependenciesMetadata(
             dependencies=dependencies,
-            source_file=self.path,
         )
 
     def _parse_requirements_txt(self, requirements_path: Path) -> DependenciesMetadata:
@@ -80,7 +79,6 @@ class DependencyParser:
         ]
         return DependenciesMetadata(
             dependencies=dependencies,
-            source_file=requirements_path,
         )
 
     def _parse_pyproject_toml(self, pyproject_path: Path) -> DependenciesMetadata:
@@ -106,7 +104,6 @@ class DependencyParser:
 
         return DependenciesMetadata(
             dependencies=list(set(deps)),
-            source_file=pyproject_path,
         )
 
     def _find_project_root(self) -> Optional[Path]:
