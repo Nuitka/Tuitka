@@ -3,8 +3,8 @@ SplashScreen {
 }
 
 #splash-dialog {
-    width: 70;
-    height: 25;
+    width: 120;
+    height: 35;
     padding: 2;
 }
 

@@ -59,7 +59,7 @@ class SplashScreen(ModalScreen):
                 yield Static(self.snake_arts[self.current_snake_index], id="splash-art")
                 yield Static(SPLASHSCREEN_LINKS, id="splash-links")
             yield Static(
-                "Press any key to skip... (← → to change snake)",
+                "Press any key to skip... (← → to move snake)",
                 classes="continue-text",
             )
 
@@ -74,7 +74,7 @@ class SplashScreen(ModalScreen):
             duration=2.0,
         )
 
-    def _get_random_offset(self, magnitude: float = 15.0) -> Offset:
+    def _get_random_offset(self, magnitude: float = 25.0) -> Offset:
         x_offset = uniform(-magnitude, magnitude)
         y_offset = uniform(-magnitude * 0.6, magnitude * 0.6)
         return Offset(x_offset, y_offset)
@@ -92,7 +92,7 @@ class SplashScreen(ModalScreen):
         if not self._is_screen_mounted:
             return
         splash_art = self.query_one("#splash-art", Static)
-        exit_offset = self._get_random_offset(magnitude=15)
+        exit_offset = self._get_random_offset(magnitude=30)
         splash_art.animate(
             "offset", exit_offset, duration=0.8, on_complete=self._snake_slide_in
         )
@@ -102,9 +102,9 @@ class SplashScreen(ModalScreen):
             return
         splash_art = self.query_one("#splash-art", Static)
         splash_art.update(self.snake_arts[self.current_snake_index])
-        entry_start = self._get_random_offset(magnitude=30)
+        entry_start = self._get_random_offset(magnitude=35)
         splash_art.offset = entry_start
-        entry_end = self._get_random_offset(magnitude=10)
+        entry_end = self._get_random_offset(magnitude=15)
         splash_art.animate(
             "offset",
             entry_end,
@@ -141,12 +141,6 @@ class CustomDirectoryTree(DirectoryTree):
 
 class FileDialogScreen(ModalScreen[str | None]):
     CSS_PATH = STYLE_MODAL_FILEDIALOG
-
-    DEFAULT_CSS = """
-    Input {
-        width: 1fr;
-    }
-    """
 
     dir_root: reactive[Path] = reactive(Path.cwd(), init=False)
     selected_py_file: reactive[str] = reactive("", init=False)
