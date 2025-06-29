@@ -27,7 +27,11 @@ from tuitka.constants import (
     SNAKE_ARTS,
     SPLASHSCREEN_LINKS,
 )
-from tuitka.utils import prepare_nuitka_command, create_nuitka_options_dict
+from tuitka.utils import (
+    prepare_nuitka_command,
+    create_nuitka_options_dict,
+    DependencySource,
+)
 from tuitka.assets import (
     STYLE_MODAL_FILEDIALOG,
     STYLE_MODAL_COMPILATION,
@@ -271,7 +275,7 @@ class CompilationScreen(ModalScreen):
         log = self.query_one("#output_log", OutputLogger)
 
         self.app.call_from_thread(log.clear)
-        cmd, requirements_txt = prepare_nuitka_command(
+        cmd, requirements_txt, deps_metadata = prepare_nuitka_command(
             Path(self.app.script), self.python_version, **self.nuitka_options
         )
 
