@@ -55,15 +55,7 @@ mythical_snek = r"""
 
 """
 
-SNAKE_ART = choice(
-    [
-        sss_snek,
-        happy_snek_2,
-        snek_1,
-        face_snek,
-        mythical_snek,
-    ]
-)
+SNAKE_ARTS = [sss_snek, happy_snek_2, snek_1, face_snek, mythical_snek]
 SPLASHSCREEN_LINKS = (
     "\n\nNuitka Github: \n\n[#fbdd58 underline]https://github.com/Nuitka/Nuitka[/]\n\n"
     "Tuitka Github: \n\n[#fbdd58 underline]https://github.com/KRRT7/tuitka[/]"

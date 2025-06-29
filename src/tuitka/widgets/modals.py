@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
 from typing import Iterable
+from random import randint, uniform
 
 from textual import on, work
 from textual.app import ComposeResult
@@ -8,6 +9,7 @@ from textual.containers import Grid, Horizontal, ScrollableContainer, Vertical
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.message import Message
+from textual.geometry import Offset
 from textual.widgets import (
     Button,
     DirectoryTree,
@@ -21,7 +23,10 @@ from textual.widgets import (
     Collapsible,
 )
 
-from tuitka.constants import SNAKE_ART, SPLASHSCREEN_LINKS
+from tuitka.constants import (
+    SNAKE_ARTS,
+    SPLASHSCREEN_LINKS,
+)
 from tuitka.utils import prepare_nuitka_command, create_nuitka_options_dict
 from tuitka.assets import (
     STYLE_MODAL_FILEDIALOG,
@@ -41,23 +46,90 @@ class SplashScreen(ModalScreen):
     class Dismiss(Message):
         pass
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.snake_arts = SNAKE_ARTS
+        self.current_snake_index = randint(0, len(self.snake_arts) - 1)
+        self.snake_timer = None
+        self._is_screen_mounted = False
+
     def compose(self) -> ComposeResult:
         with Vertical(id="splash-dialog"):
             with Vertical(id="splash-content"):
-                yield Static(SNAKE_ART, id="splash-art")
+                yield Static(self.snake_arts[self.current_snake_index], id="splash-art")
                 yield Static(SPLASHSCREEN_LINKS, id="splash-links")
-            yield Static("Press any key to skip...", classes="continue-text")
+            yield Static(
+                "Press any key to skip... (← → to change snake)",
+                classes="continue-text",
+            )
 
     def on_mount(self) -> None:
-        self.set_timer(3, self._on_timer)
+        self._is_screen_mounted = True
+        self.set_timer(8, self._on_timer)
+        self.snake_timer = self.set_interval(4.0, self._cycle_snake)
+        initial_offset = self._get_random_offset()
+        self.query_one("#splash-art", Static).animate(
+            "offset",
+            initial_offset,
+            duration=2.0,
+        )
+
+    def _get_random_offset(self, magnitude: float = 15.0) -> Offset:
+        x_offset = uniform(-magnitude, magnitude)
+        y_offset = uniform(-magnitude * 0.6, magnitude * 0.6)
+        return Offset(x_offset, y_offset)
 
     def _on_timer(self) -> None:
         self.post_message(self.Dismiss())
 
-    def on_key(self) -> None:
-        self.post_message(self.Dismiss())
+    def _cycle_snake(self) -> None:
+        if not self._is_screen_mounted:
+            return
+        self.current_snake_index = (self.current_snake_index + 1) % len(self.snake_arts)
+        self._update_snake_art()
+
+    def _update_snake_art(self) -> None:
+        if not self._is_screen_mounted:
+            return
+        splash_art = self.query_one("#splash-art", Static)
+        exit_offset = self._get_random_offset(magnitude=15)
+        splash_art.animate(
+            "offset", exit_offset, duration=0.8, on_complete=self._snake_slide_in
+        )
+
+    def _snake_slide_in(self) -> None:
+        if not self._is_screen_mounted:
+            return
+        splash_art = self.query_one("#splash-art", Static)
+        splash_art.update(self.snake_arts[self.current_snake_index])
+        entry_start = self._get_random_offset(magnitude=30)
+        splash_art.offset = entry_start
+        entry_end = self._get_random_offset(magnitude=10)
+        splash_art.animate(
+            "offset",
+            entry_end,
+            duration=0.8,
+        )
+
+    def on_key(self, event) -> None:
+        if event.key == "left":
+            self.current_snake_index = (self.current_snake_index - 1) % len(
+                self.snake_arts
+            )
+            self._update_snake_art()
+        elif event.key == "right":
+            self.current_snake_index = (self.current_snake_index + 1) % len(
+                self.snake_arts
+            )
+            self._update_snake_art()
+        else:
+            self.post_message(self.Dismiss())
 
     def on_splash_screen_dismiss(self, _: "SplashScreen.Dismiss") -> None:
+        self._is_screen_mounted = False
+        if self.snake_timer:
+            self.snake_timer.stop()
+            self.snake_timer = None
         self.dismiss()
 
 
