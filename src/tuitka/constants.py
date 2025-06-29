@@ -1,4 +1,3 @@
-from random import choice
 
 sss_snek = r"""
   ____                  

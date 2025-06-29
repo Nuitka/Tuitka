@@ -106,7 +106,11 @@ def parse_dependencies(_path: str | Path) -> DependenciesMetadata:
     project_root = None
     temp_path = current_path
     while True:
-        if (temp_path / "pyproject.toml").exists() or (temp_path / ".git").exists() or (temp_path / "requirements.txt").exists():
+        if (
+            (temp_path / "pyproject.toml").exists()
+            or (temp_path / ".git").exists()
+            or (temp_path / "requirements.txt").exists()
+        ):
             project_root = temp_path
             break
         if temp_path == root:
