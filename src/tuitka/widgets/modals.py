@@ -483,12 +483,10 @@ class NuitkaSettingsScreen(ModalScreen[dict | None]):
 
     @on(Input.Changed, "#search_input")
     def on_search_changed(self, event: Input.Changed) -> None:
-        """Filter settings based on search input."""
         search_term = event.value.lower().strip()
         self.filter_settings(search_term)
 
     def filter_settings(self, search_term: str) -> None:
-        """Filter settings based on search term."""
         query_selector = (
             "ModalBoolFlag, ModalStringFlag, ModalSelectionFlag, ModalRadioFlag"
         )
@@ -528,7 +526,6 @@ class NuitkaSettingsScreen(ModalScreen[dict | None]):
 
     @on(Button.Pressed, "#save_button")
     def on_save_pressed(self) -> None:
-        """Collect all settings from flag widgets and return as dict."""
         settings = {}
 
         for widget in self.flag_widgets:

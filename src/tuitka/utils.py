@@ -62,8 +62,7 @@ def parse_723(script: str) -> DependenciesMetadata:
 
 
 def parse_requirements_text(requirements: Path) -> DependenciesMetadata:
-    with requirements.open("r") as f:
-        lines = f.readlines()
+    lines = requirements.read_text(encoding="utf-8").splitlines()
     return DependenciesMetadata(
         dependencies=[
             line.strip() for line in lines if line.strip() and not line.startswith("#")
@@ -90,20 +89,41 @@ def parse_pyproject(pyproject: str) -> DependenciesMetadata:
 
 def parse_dependencies(_path: str | Path) -> DependenciesMetadata:
     path = Path(_path) if isinstance(_path, str) else _path
+
     if not path or not path.exists():
         return DependenciesMetadata(dependencies=[])
-    if path.name == "pyproject.toml":
-        with path.open("rb") as f:
-            content = f.read()
-        return parse_pyproject(content.decode())
-    elif path.name == "requirements.txt":
-        return parse_requirements_text(path)
-    else:
-        with path.open("r") as f:
-            script = f.read()
+
+    if path.is_file() and path.suffix == ".py":
+        script = path.read_text(encoding="utf-8")
         metadata = parse_723(script)
         if metadata.dependencies:
             return metadata
+
+    start_dir = path.parent if path.is_file() else path
+    current_path = start_dir.resolve()
+    root = Path(current_path.anchor)
+
+    project_root = None
+    temp_path = current_path
+    while True:
+        if (temp_path / "pyproject.toml").exists() or (temp_path / ".git").exists() or (temp_path / "requirements.txt").exists():
+            project_root = temp_path
+            break
+        if temp_path == root:
+            break
+        temp_path = temp_path.parent
+
+    search_dir = project_root or start_dir
+
+    pyproject_candidate = search_dir / "pyproject.toml"
+    if pyproject_candidate.exists():
+        content = pyproject_candidate.read_text(encoding="utf-8")
+        return parse_pyproject(content)
+
+    requirements_candidate = search_dir / "requirements.txt"
+    if requirements_candidate.exists():
+        return parse_requirements_text(requirements_candidate)
+
     return DependenciesMetadata(dependencies=[])
 
 
