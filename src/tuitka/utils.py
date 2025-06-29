@@ -10,6 +10,7 @@ import sys
 @dataclass
 class DependenciesMetadata:
     dependencies: list[str]
+    requirements_path: Optional[Path] = None  # Path to the source file where dependencies were parsed from
 
     def temp_requirements(self) -> Path:
         path = Path("requirements.txt")
@@ -51,7 +52,7 @@ class DependencyParser:
     def __init__(self, path: Path):
         self.path = path
 
-    def _parse_pep_723(self, script: str) -> DependenciesMetadata:
+    def _parse_pep_723(self, script: str) -> list[str]:
         name = "script"
         matches = list(
             filter(
@@ -60,28 +61,22 @@ class DependencyParser:
             )
         )
         if not matches:
-            return DependenciesMetadata(dependencies=[])
+            return []
         if len(matches) > 1:
             raise ValueError(f"Multiple {name} blocks found. You can write only one")
         group = matches[0].groupdict()
         content = "".join(
             line[2:] for line in group["content"].splitlines(keepends=True)
         )
-        dependencies = tomllib.loads(content).get("dependencies", [])
-        return DependenciesMetadata(
-            dependencies=dependencies,
-        )
+        return tomllib.loads(content).get("dependencies", [])
 
-    def _parse_requirements_txt(self, requirements_path: Path) -> DependenciesMetadata:
+    def _parse_requirements_txt(self, requirements_path: Path) -> list[str]:
         lines = requirements_path.read_text(encoding="utf-8").splitlines()
-        dependencies = [
+        return [
             line.strip() for line in lines if line.strip() and not line.startswith("#")
         ]
-        return DependenciesMetadata(
-            dependencies=dependencies,
-        )
 
-    def _parse_pyproject_toml(self, pyproject_path: Path) -> DependenciesMetadata:
+    def _parse_pyproject_toml(self, pyproject_path: Path) -> list[str]:
         content = pyproject_path.read_text(encoding="utf-8")
         pyproject_dict = tomllib.loads(content)
         deps = []
@@ -102,9 +97,7 @@ class DependencyParser:
         if project_deps:
             deps += [d for d in project_deps if isinstance(d, str)]
 
-        return DependenciesMetadata(
-            dependencies=list(set(deps)),
-        )
+        return list(set(deps))
 
     def _find_project_root(self) -> Optional[Path]:
         start_dir = self.path.parent if self.path.is_file() else self.path
@@ -126,14 +119,17 @@ class DependencyParser:
 
     def parse(self) -> DependenciesMetadata:
         if not self.path or not self.path.exists():
-            return DependenciesMetadata(dependencies=[])
+            return DependenciesMetadata(dependencies=[], requirements_path=None)
 
         # Check for PEP 723 dependencies in Python scripts
         if self.path.is_file() and self.path.suffix == ".py":
             script = self.path.read_text(encoding="utf-8")
-            metadata = self._parse_pep_723(script)
-            if metadata.dependencies:
-                return metadata
+            dependencies = self._parse_pep_723(script)
+            if dependencies:
+                return DependenciesMetadata(
+                    dependencies=dependencies,
+                    requirements_path=self.path
+                )
 
         # Find project root and search for dependency files
         project_root = self._find_project_root()
@@ -144,14 +140,22 @@ class DependencyParser:
         # Try pyproject.toml first
         pyproject_candidate = search_dir / "pyproject.toml"
         if pyproject_candidate.exists():
-            return self._parse_pyproject_toml(pyproject_candidate)
+            dependencies = self._parse_pyproject_toml(pyproject_candidate)
+            return DependenciesMetadata(
+                dependencies=dependencies,
+                requirements_path=pyproject_candidate
+            )
 
         # Fallback to requirements.txt
         requirements_candidate = search_dir / "requirements.txt"
         if requirements_candidate.exists():
-            return self._parse_requirements_txt(requirements_candidate)
+            dependencies = self._parse_requirements_txt(requirements_candidate)
+            return DependenciesMetadata(
+                dependencies=dependencies,
+                requirements_path=requirements_candidate
+            )
 
-        return DependenciesMetadata(dependencies=[])
+        return DependenciesMetadata(dependencies=[], requirements_path=None)
 
 
 def parse_dependencies(_path: str | Path) -> DependenciesMetadata:
@@ -260,7 +264,7 @@ def create_nuitka_options_dict() -> dict[str, dict[str, dict]]:
     return options_dict
 
 
-__all__ = ["prepare_nuitka_command", "create_nuitka_options_dict"]
+__all__ = ["prepare_nuitka_command", "create_nuitka_options_dict", "DependenciesMetadata"]
 
 
 if __name__ == "__main__":

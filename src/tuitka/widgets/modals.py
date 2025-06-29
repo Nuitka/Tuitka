@@ -278,6 +278,12 @@ class CompilationScreen(ModalScreen):
             Path(self.app.script), self.python_version, **self.nuitka_options
         )
 
+        if deps_metadata.dependencies:
+            self.app.notify(
+                f"{len(deps_metadata.dependencies)} dependencies found in {deps_metadata.requirements_path.name}",
+                title="Requirements",
+            )
+
         try:
             nuitka_index = cmd.index("nuitka")
             cmd_display = " ".join(cmd[nuitka_index:])
