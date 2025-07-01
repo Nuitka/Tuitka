@@ -1,22 +1,42 @@
 import re
-import tomllib
+import toml
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 import sys
+import platform
+
+platform_name = platform.system().lower()
 
 
 @dataclass
 class DependenciesMetadata:
     dependencies: list[str]
-    requirements_path: Optional[Path] = None  # Path to the source file where dependencies were parsed from
+    requirements_path: Optional[Path] = (
+        None  # Path to the source file where dependencies were parsed from
+    )
 
-    def temp_requirements(self) -> Path:
-        path = Path("requirements.txt")
-        with path.open("w") as f:
-            f.writelines("\n".join(self.dependencies))
-        return path
+    def to_pep_723(self) -> str:
+        script_metadata = {"dependencies": self.dependencies}
+        toml_content = toml.dumps(script_metadata)
+        lines = ["# /// script"]
+        for line in toml_content.strip().splitlines():
+            lines.append(f"# {line}")
+        lines.append("# ///")
+        return "\n".join(lines)
+
+    @contextmanager
+    def temp_pep_723_file(self, file_path: Path):
+        original_content = file_path.read_text(encoding="utf-8")
+        try:
+            pep_723_block = self.to_pep_723()
+            new_content = f"{pep_723_block}\n\n{original_content}"
+            file_path.write_text(new_content, encoding="utf-8")
+            yield file_path
+        finally:
+            file_path.write_text(original_content, encoding="utf-8")
 
 
 def _extract_dependencies_from_table(dep_table: dict) -> list[str]:
@@ -68,7 +88,7 @@ class DependencyParser:
         content = "".join(
             line[2:] for line in group["content"].splitlines(keepends=True)
         )
-        return tomllib.loads(content).get("dependencies", [])
+        return toml.loads(content).get("dependencies", [])
 
     def _parse_requirements_txt(self, requirements_path: Path) -> list[str]:
         lines = requirements_path.read_text(encoding="utf-8").splitlines()
@@ -78,7 +98,7 @@ class DependencyParser:
 
     def _parse_pyproject_toml(self, pyproject_path: Path) -> list[str]:
         content = pyproject_path.read_text(encoding="utf-8")
-        pyproject_dict = tomllib.loads(content)
+        pyproject_dict = toml.loads(content)
         deps = []
         tool = pyproject_dict.get("tool", {})
 
@@ -127,8 +147,7 @@ class DependencyParser:
             dependencies = self._parse_pep_723(script)
             if dependencies:
                 return DependenciesMetadata(
-                    dependencies=dependencies,
-                    requirements_path=self.path
+                    dependencies=dependencies, requirements_path=self.path
                 )
 
         # Find project root and search for dependency files
@@ -142,8 +161,7 @@ class DependencyParser:
         if pyproject_candidate.exists():
             dependencies = self._parse_pyproject_toml(pyproject_candidate)
             return DependenciesMetadata(
-                dependencies=dependencies,
-                requirements_path=pyproject_candidate
+                dependencies=dependencies, requirements_path=pyproject_candidate
             )
 
         # Fallback to requirements.txt
@@ -151,8 +169,7 @@ class DependencyParser:
         if requirements_candidate.exists():
             dependencies = self._parse_requirements_txt(requirements_candidate)
             return DependenciesMetadata(
-                dependencies=dependencies,
-                requirements_path=requirements_candidate
+                dependencies=dependencies, requirements_path=requirements_candidate
             )
 
         return DependenciesMetadata(dependencies=[], requirements_path=None)
@@ -166,22 +183,21 @@ def parse_dependencies(_path: str | Path) -> DependenciesMetadata:
 
 def prepare_nuitka_command(
     script_path: Path, python_version: str = "3.11", **nuitka_options
-) -> tuple[list[str], Path | None, DependenciesMetadata]:
+) -> tuple[list[str], DependenciesMetadata]:
     dependencies_metadata = parse_dependencies(script_path)
-    requirements_file = None
 
     cmd = [
-        "uvx",
+        "uv",
+        "--python-preference",
+        "system",
+        "run",
         "--python",
         python_version,
         "--isolated",
+        "--with",
+        "nuitka",
+        "nuitka",
     ]
-
-    if dependencies_metadata.dependencies:
-        requirements_file = dependencies_metadata.temp_requirements()
-        cmd.extend(["--with-requirements", requirements_file.as_posix()])
-
-    cmd.append("nuitka")
 
     for flag, value in nuitka_options.items():
         if value is None:
@@ -197,7 +213,7 @@ def prepare_nuitka_command(
 
     cmd.append(script_path.as_posix())
 
-    return cmd, requirements_file, dependencies_metadata
+    return cmd, dependencies_metadata
 
 
 def create_nuitka_options_dict() -> dict[str, dict[str, dict]]:
@@ -264,7 +280,11 @@ def create_nuitka_options_dict() -> dict[str, dict[str, dict]]:
     return options_dict
 
 
-__all__ = ["prepare_nuitka_command", "create_nuitka_options_dict", "DependenciesMetadata"]
+__all__ = [
+    "prepare_nuitka_command",
+    "create_nuitka_options_dict",
+    "DependenciesMetadata",
+]
 
 
 if __name__ == "__main__":
