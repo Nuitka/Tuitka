@@ -22,8 +22,7 @@ class DependenciesMetadata:
         script_metadata = {"dependencies": self.dependencies}
         toml_content = toml.dumps(script_metadata)
         lines = ["# /// script"]
-        for line in toml_content.strip().splitlines():
-            lines.append(f"# {line}")
+        lines.extend(f"# {line}" for line in toml_content.strip().splitlines())
         lines.append("# ///")
         return "\n".join(lines)
 
