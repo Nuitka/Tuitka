@@ -3,7 +3,7 @@ from textual.reactive import reactive
 from textual.widgets import Footer, Header
 
 from tuitka.assets import STYLE_MAIN
-from tuitka.widgets.modals import SplashScreen
+from tuitka.widgets.modals import SplashScreen, SupportNuitkaModal
 from tuitka.widgets.script_input import ScriptInputWidget
 
 
@@ -12,8 +12,16 @@ class NuitkaTUI(App):
     TITLE = "Tuitka - Nuitka TUI"
     script: reactive[str] = reactive("", init=False)
 
+    BINDINGS = [
+        ("ctrl+s", "show_support", "Support Nuitka"),
+    ]
+
     def on_mount(self) -> None:
         self.push_screen(SplashScreen())
+
+    def action_show_support(self) -> None:
+        """Show the support Nuitka modal."""
+        self.push_screen(SupportNuitkaModal())
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)

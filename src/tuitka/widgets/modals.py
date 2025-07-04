@@ -12,15 +12,18 @@ from textual.message import Message
 from textual.geometry import Offset
 from textual.widgets import (
     Button,
+    Collapsible,
     DirectoryTree,
     Input,
     Log,
+    Markdown,
     RadioButton,
     RadioSet,
     Select,
     Static,
     Switch,
-    Collapsible,
+    TabbedContent,
+    TabPane,
 )
 
 from tuitka.constants import (
@@ -36,11 +39,50 @@ from tuitka.assets import (
     STYLE_MODAL_COMPILATION,
     STYLE_MODAL_SETTINGS,
     STYLE_MODAL_SPLASHSCREEN,
+    STYLE_MODAL_SUPPORT,
+    CONTENT_SUPPORT_NUITKA,
+    CONTENT_COMMERCIAL,
 )
 
 
 class OutputLogger(Log):
     can_focus = False
+
+
+class SupportNuitkaModal(ModalScreen):
+    """A modal screen providing support information for Nuitka."""
+
+    CSS_PATH = STYLE_MODAL_SUPPORT
+
+    BINDINGS = [
+        ("s", "show_tab('support')", "Support Nuitka"),
+        ("c", "show_tab('commercial')", "Commercial"),
+        ("escape", "dismiss", "Close"),
+    ]
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="support-dialog"):
+            with TabbedContent(initial="support"):
+                with TabPane("Support Nuitka", id="support"):
+                    yield Markdown(CONTENT_SUPPORT_NUITKA)
+
+                with TabPane("Commercial", id="commercial"):
+                    yield Markdown(CONTENT_COMMERCIAL)
+
+            with Horizontal(classes="support-controls"):
+                yield Button("Close", variant="primary", id="close_button")
+
+    @on(Button.Pressed, "#close_button")
+    def on_close_pressed(self) -> None:
+        self.dismiss()
+
+    def action_show_tab(self, tab: str) -> None:
+        tabbed_content = self.query_one(TabbedContent)
+        tabbed_content.active = tab
+
+    def action_dismiss(self) -> None:
+        """Dismiss the modal."""
+        self.dismiss()
 
 
 class SplashScreen(ModalScreen):
@@ -62,7 +104,7 @@ class SplashScreen(ModalScreen):
                 yield Static(self.snake_arts[self.current_snake_index], id="splash-art")
                 yield Static(SPLASHSCREEN_LINKS, id="splash-links")
             yield Static(
-                "Press any key to skip... (← → to move snake)",
+                "Press any key to skip...",
                 classes="continue-text",
             )
 
@@ -107,26 +149,16 @@ class SplashScreen(ModalScreen):
         splash_art.update(self.snake_arts[self.current_snake_index])
         entry_start = self._get_random_offset(magnitude=35)
         splash_art.offset = entry_start
-        entry_end = self._get_random_offset(magnitude=15)
+        entry_end = Offset(0, 0)
         splash_art.animate(
             "offset",
             entry_end,
             duration=0.8,
         )
 
+
     def on_key(self, event) -> None:
-        if event.key == "left":
-            self.current_snake_index = (self.current_snake_index - 1) % len(
-                self.snake_arts
-            )
-            self._update_snake_art()
-        elif event.key == "right":
-            self.current_snake_index = (self.current_snake_index + 1) % len(
-                self.snake_arts
-            )
-            self._update_snake_art()
-        else:
-            self.post_message(self.Dismiss())
+        self.post_message(self.Dismiss())
 
     def on_splash_screen_dismiss(self, _: "SplashScreen.Dismiss") -> None:
         self._is_screen_mounted = False

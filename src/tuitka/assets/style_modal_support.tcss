@@ -1,0 +1,47 @@
+/* CSS styles for SupportNuitkaModal */
+
+SupportNuitkaModal {
+    align: center middle;
+}
+
+#support-dialog {
+
+    border: thick $primary;
+    padding: 1;
+}
+
+.support-header {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    margin: 0 0 1 0;
+}
+
+.support-controls {
+    height: auto;
+    align: center middle;
+    margin: 1 0 0 0;
+}
+
+.support-controls Button {
+    width: auto;
+    margin: 0 1;
+}
+
+/* Style the tabbed content area */
+SupportNuitkaModal TabbedContent {
+    height: 1fr;
+    margin: 1 0;
+}
+
+SupportNuitkaModal TabPane {
+    padding: 1;
+}
+
+/* Style markdown content */
+SupportNuitkaModal Markdown {
+    height: 1fr;
+    margin: 0;
+    padding: 0 1;
+    color: $text;
+}
