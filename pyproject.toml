@@ -11,6 +11,7 @@ requires-python = ">=3.9"
 dependencies = [
     "nuitka>=2.7.7",
     "textual>=3.2.0",
+    "toml>=0.10.2",
     "uv>=0.7.3",
 ]
 
@@ -23,9 +24,10 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.1.0",
-    "pre-commit-uv>=4.1.4",
     "pytest>=8.3.4",
     "ruff>=0.11.13",
     "textual-dev>=1.7.0",
 ]
+
+[tool.ruff]
+extend-exclude = ["tests/compilation"]

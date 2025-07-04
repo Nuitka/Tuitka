@@ -268,21 +268,16 @@ class CompilationScreen(ModalScreen):
     def cancel_compilation(self) -> None:
         if self.process and self.process.returncode is None:
             self.process.terminate()
+            self.process = None
 
     @work(thread=True, exclusive=True)
     async def run_compilation(self) -> None:
         log = self.query_one("#output_log", OutputLogger)
 
         self.app.call_from_thread(log.clear)
-        cmd, requirements_txt, deps_metadata = prepare_nuitka_command(
+        cmd, deps_metadata = prepare_nuitka_command(
             Path(self.app.script), self.python_version, **self.nuitka_options
         )
-
-        if deps_metadata.dependencies:
-            self.app.notify(
-                f"{len(deps_metadata.dependencies)} dependencies found in {deps_metadata.requirements_path.name}",
-                title="Requirements",
-            )
 
         try:
             nuitka_index = cmd.index("nuitka")
@@ -293,11 +288,24 @@ class CompilationScreen(ModalScreen):
         self.app.call_from_thread(log.write_line, cmd_display)
         self.app.call_from_thread(log.write_line, "")
 
-        self.process = await asyncio.create_subprocess_shell(
-            " ".join(cmd),
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
-        )
+        script_path = Path(self.app.script)
+        if (
+            deps_metadata.dependencies
+            and deps_metadata.requirements_path != script_path
+        ):
+            with deps_metadata.temp_pep_723_file(script_path):
+                self.process = await asyncio.create_subprocess_shell(
+                    " ".join(cmd),
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.STDOUT,
+                )
+        else:
+            self.process = await asyncio.create_subprocess_shell(
+                " ".join(cmd),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
+
         process = self.process
 
         while True:
@@ -314,13 +322,12 @@ class CompilationScreen(ModalScreen):
 
         await process.wait()
 
+        self.process = None
+
         self.app.call_from_thread(
             setattr, self, "compilation_success", process.returncode == 0
         )
         self.app.call_from_thread(setattr, self, "compilation_finished", True)
-
-        if requirements_txt and requirements_txt.exists():
-            requirements_txt.unlink()
 
 
 class ModalBoolFlag(Grid):
