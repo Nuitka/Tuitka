@@ -138,8 +138,17 @@ class SplashScreen(ModalScreen):
             return
         splash_art = self.query_one("#splash-art", Static)
         exit_offset = self._get_random_offset(magnitude=30)
+
+        def on_exit_complete():
+            self._snake_slide_in()
+            splash_art.animate(
+                "offset",
+                Offset(0, 0),
+                duration=0.5,
+            )
+
         splash_art.animate(
-            "offset", exit_offset, duration=0.8, on_complete=self._snake_slide_in
+            "offset", exit_offset, duration=0.8, on_complete=on_exit_complete
         )
 
     def _snake_slide_in(self) -> None:
@@ -155,7 +164,6 @@ class SplashScreen(ModalScreen):
             entry_end,
             duration=0.8,
         )
-
 
     def on_key(self, event) -> None:
         self.post_message(self.Dismiss())
