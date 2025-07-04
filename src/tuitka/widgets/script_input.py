@@ -1,6 +1,6 @@
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Center, Vertical
+from textual.containers import Vertical, Center, Container
 from textual.widgets import Button, Input, Static, Select
 from textual.widgets import RadioButton, RadioSet
 
@@ -26,74 +26,86 @@ class ScriptInput(Input):
         self.app.script = self.value.strip()
 
 
-class ScriptInputWidget(Vertical):
+class ScriptInputWidget(Container):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.custom_settings = None
 
     DEFAULT_CSS = """
     ScriptInputWidget {
+        width: 1fr;
+        height: 1fr;
         align: center middle;
-        height: 100%;
+        padding: 2;
     }
 
-    .input-container {
-        margin: 1 0;
-        width: 100%;
+    #main_container {
+        width: 80%;
+        max-width: 100;
+        height: auto;
         align: center middle;
     }
 
-    .input-container Input {
-        width: 60%;
-        max-width: 80;
-    }
-
-    .button-container {
-        margin: 1 0;
-    }
-
-    .version-label {
+    #title_label {
         text-align: center;
-        margin: 0 0 1 0;
+        color: $text-muted;
+        margin-bottom: 2;
+        width: 1fr;
+    }
+
+    #input_section {
+        width: 1fr;
+        height: auto;
+        margin-bottom: 2;
+    }
+
+    #script_input {
+        width: 1fr;
+        margin-bottom: 1;
+    }
+
+    #browse_button {
+        width: auto;
     }
 
     #compilation_options_container {
         border: round $panel-lighten-2;
-        width: 60%;
+        width: 1fr;
         height: auto;
-        padding: 1 2;
-        margin-top: 1;
+        padding: 2;
+        margin-bottom: 2;
     }
 
     .group_title {
         text-align: center;
         text-style: bold;
         margin-bottom: 1;
+        width: 1fr;
     }
 
     .sub_title {
         margin-top: 1;
+        margin-bottom: 1;
         color: $text-muted;
+        width: 1fr;
     }
 
     #python_version_select {
-        width: 100%;
+        width: 1fr;
         margin-top: 1;
     }
 
     #settings_radioset {
         height: auto;
-        width: 100%;
-        layout: horizontal;
-        background: transparent;
-        border: none;
-        align: center middle;
+        width: 1fr;
         margin-top: 1;
+        align: center middle;
+        layout: horizontal;
     }
 
     RadioButton {
         width: auto;
-        margin: 0 2;
+        margin: 0 1;
         background: transparent;
         border: none;
         outline: none;
@@ -106,30 +118,37 @@ class ScriptInputWidget(Vertical):
         outline: none;
     }
 
-    ScriptInputWidget > Static {
-        text-align: center;
-        color: $text-muted;
-        margin: 2 0;
+    #compile_button_container {
+        width: 1fr;
+        height: auto;
+        align: center middle;
+    }
+
+    #compile_button {
+        width: auto;
     }
     """
 
     def compose(self) -> ComposeResult:
-        yield Static("Select a Python script to compile with Nuitka")
+        with Vertical(id="main_container"):
+            yield Static(
+                "Select a Python script to compile with Nuitka", id="title_label"
+            )
 
-        with Center(classes="input-container"):
-            yield ScriptInput(id="script_input")
+            with Vertical(id="input_section"):
+                yield ScriptInput(id="script_input")
+                with Center():
+                    yield Button("Browse Files", variant="primary", id="browse_button")
 
-        with Center(classes="button-container"):
-            yield Button("Browse Files", variant="primary", id="browse_button")
-
-        with Center():
             with Vertical(id="compilation_options_container"):
                 yield Static("Compilation Options", classes="group_title")
+
                 yield Static("Presets", classes="sub_title")
                 with RadioSet(id="settings_radioset"):
                     yield RadioButton("Onefile", id="onefile_preset", value=True)
                     yield RadioButton("Standalone", id="standalone_preset")
                     yield RadioButton("Custom", id="custom_settings")
+
                 yield Static("Python Version", classes="sub_title")
                 yield Select(
                     [
@@ -144,8 +163,8 @@ class ScriptInputWidget(Vertical):
                     id="python_version_select",
                 )
 
-        with Center(classes="button-container"):
-            yield Button("Compile", variant="success", id="compile_button")
+            with Center(id="compile_button_container"):
+                yield Button("Compile", variant="success", id="compile_button")
 
     def on_mount(self) -> None:
         script_input = self.query_one("#script_input", ScriptInput)
