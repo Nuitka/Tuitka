@@ -25,6 +25,7 @@ from textual.widgets import (
     TabbedContent,
     TabPane,
 )
+from textual_tty.widgets import TextualTerminal
 
 from tuitka.constants import (
     SNAKE_ARTS,
@@ -43,10 +44,6 @@ from tuitka.assets import (
     CONTENT_SUPPORT_NUITKA,
     CONTENT_COMMERCIAL,
 )
-
-
-class OutputLogger(Log):
-    can_focus = False
 
 
 class SupportNuitkaModal(ModalScreen):
@@ -262,11 +259,11 @@ class CompilationScreen(ModalScreen):
         super().__init__()
         self.python_version = python_version
         self.nuitka_options = nuitka_options
-        self.process = None
+        self.terminal = None
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            yield OutputLogger(id="output_log")
+            yield TextualTerminal(id="compilation_terminal")
             yield Static(
                 "Compilation in progress...",
                 id="status_label",
@@ -302,72 +299,46 @@ class CompilationScreen(ModalScreen):
                 status_label.set_class(True, "error")
                 status_label.set_class(False, "in-progress")
 
+            self.dismiss()
+
     def on_mount(self) -> None:
-        self.run_compilation()
+        self.terminal = self.query_one("#compilation_terminal", TextualTerminal)
+        self.set_timer(0.5, self.run_compilation)
 
     def cancel_compilation(self) -> None:
-        if self.process and self.process.returncode is None:
-            self.process.terminate()
-            self.process = None
+        if self.terminal:
+            self.terminal.stop_process()
 
-    @work(thread=True, exclusive=True)
-    async def run_compilation(self) -> None:
-        log = self.query_one("#output_log", OutputLogger)
+    @on(TextualTerminal.ProcessExited)
+    def on_process_exited(self, event: TextualTerminal.ProcessExited) -> None:
+        self.compilation_success = event.exit_code == 0
+        self.compilation_finished = True
 
-        self.app.call_from_thread(log.clear)
+    def run_compilation(self) -> None:
         cmd, deps_metadata = prepare_nuitka_command(
             Path(self.app.script), self.python_version, **self.nuitka_options
         )
 
+        # cmd_display is just for showing to user, but we need to run the full cmd
         try:
             nuitka_index = cmd.index("nuitka")
             cmd_display = " ".join(cmd[nuitka_index:])
         except ValueError:
-            cmd_display = " ".join(cmd)
-
-        self.app.call_from_thread(log.write_line, cmd_display)
-        self.app.call_from_thread(log.write_line, "")
+            cmd_display = " ".join(cmd)  # noqa: F841
 
         script_path = Path(self.app.script)
+        command_to_run = " ".join(cmd)
+
+        self.terminal.input("clear\n")
+
         if (
             deps_metadata.dependencies
             and deps_metadata.requirements_path != script_path
         ):
             with deps_metadata.temp_pep_723_file(script_path):
-                self.process = await asyncio.create_subprocess_shell(
-                    " ".join(cmd),
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.STDOUT,
-                )
+                self.terminal.input(command_to_run + " && exit\n")
         else:
-            self.process = await asyncio.create_subprocess_shell(
-                " ".join(cmd),
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.STDOUT,
-            )
-
-        process = self.process
-
-        while True:
-            if process.returncode is not None:
-                break
-            if process.stdout is None:
-                break
-
-            line = await process.stdout.readline()
-            if not line:
-                break
-
-            self.app.call_from_thread(log.write_line, line.decode().rstrip())
-
-        await process.wait()
-
-        self.process = None
-
-        self.app.call_from_thread(
-            setattr, self, "compilation_success", process.returncode == 0
-        )
-        self.app.call_from_thread(setattr, self, "compilation_finished", True)
+            self.terminal.input(command_to_run + " && exit\n")
 
 
 class ModalBoolFlag(Grid):
