@@ -11,6 +11,8 @@ requires-python = ">=3.10"
 dependencies = [
     "nuitka>=2.7.7",
     "textual>=3.2.0",
+    "textual-tty>=0.2.1",
+    "textual-window",
     "toml>=0.10.2",
     "uv>=0.7.3",
 ]
@@ -31,3 +33,6 @@ dev = [
 
 [tool.ruff]
 extend-exclude = ["tests/compilation"]
+
+[tool.uv.sources]
+textual-window = { git = "https://github.com/KRRT7/textual-window.git" }
