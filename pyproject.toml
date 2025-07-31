@@ -7,7 +7,7 @@ authors = [
     { name = "KRRT7", email = "turcioskevinr@gmail.com" },
     { name = "Zaloog", email = "gramslars@gmail.com" }
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "nuitka>=2.7.7",
     "textual>=3.2.0",
