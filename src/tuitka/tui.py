@@ -9,7 +9,7 @@ from tuitka.widgets.script_input import ScriptInputWidget
 
 class NuitkaTUI(App):
     CSS_PATH = STYLE_MAIN
-    TITLE = "Tuitka - Nuitka TUI"
+    TITLE = "Tuitka - Nuitka Terminal UI"
     script: reactive[str] = reactive("", init=False)
 
     BINDINGS = [

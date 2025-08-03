@@ -10,6 +10,7 @@ authors = [
 requires-python = ">=3.10"
 dependencies = [
     "nuitka>=2.7.7",
+    "rich-pixels>=3.0.1",
     "textual>=3.2.0",
     "textual-tty>=0.2.1",
     "textual-window",

@@ -3,6 +3,8 @@ from textual.app import ComposeResult
 from textual.containers import Vertical, Center, Container
 from textual.widgets import Button, Input, Static, Select
 from textual.widgets import RadioButton, RadioSet
+from tuitka.constants import PYTHON_VERSION
+from tuitka.widgets.nuitka_header import NuitkaHeader
 
 from tuitka.widgets.modals import (
     CompilationScreen,
@@ -130,6 +132,7 @@ class ScriptInputWidget(Container):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="main_container"):
+            yield NuitkaHeader()
             yield Static(
                 "Select a Python script to compile with Nuitka", id="title_label"
             )
@@ -157,7 +160,7 @@ class ScriptInputWidget(Container):
                         ("3.11", "3.11"),
                         ("3.12", "3.12"),
                     ],
-                    value="3.11",
+                    value=PYTHON_VERSION,
                     allow_blank=False,
                     id="python_version_select",
                 )
