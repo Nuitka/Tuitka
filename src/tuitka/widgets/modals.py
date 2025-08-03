@@ -331,9 +331,9 @@ class CompilationScreen(ModalScreen):
             and deps_metadata.requirements_path != script_path
         ):
             with deps_metadata.temp_pep_723_file(script_path):
-                self.terminal.input(command_to_run + " && exit\n")
+                self.terminal.input(command_to_run)
         else:
-            self.terminal.input(command_to_run + " && exit\n")
+            self.terminal.input(command_to_run)
 
 
 class ModalBoolFlag(Grid):
