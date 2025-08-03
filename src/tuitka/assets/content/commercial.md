@@ -21,8 +21,6 @@ When your program includes data files, these are normally visible in the file sy
 
 **Nuitka VM** allows you to embed DLL files as part of an executable and run inside a protected VM environment.
 
----
-
 ## 💰 Available Packages
 
 Choose the Nuitka Commercial package that best fits your development needs:
@@ -72,8 +70,6 @@ Choose the Nuitka Commercial package that best fits your development needs:
 
 **Best For**: Applications requiring the highest level of code protection using advanced anti-reverse engineering techniques.
 
----
-
 ## ✅ Package Information
 
 **All packages include**:
@@ -86,4 +82,4 @@ Choose the Nuitka Commercial package that best fits your development needs:
 
 **Ready to protect your enterprise applications?**
 
-**Learn more & Purchase**: [Nuitka Commercial Website](https://krrt7.github.io/Nuitka-Website-MkDocs/commercial/purchase/)
+**Learn more & Purchase**: [Nuitka Commercial Website](https://krrt7.github.io/Nuitka-Website-MkDocs/commercial/purchase/) <-- this is clickable
