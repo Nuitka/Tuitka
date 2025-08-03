@@ -18,7 +18,6 @@ class ScriptInput(Input):
         )
 
     def on_mount(self) -> None:
-        """Focus on mount."""
         self.focus()
 
     def on_input_changed(self, event: Input.Changed) -> None:

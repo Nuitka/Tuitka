@@ -20,7 +20,6 @@ class NuitkaTUI(App):
         self.push_screen(SplashScreen())
 
     def action_show_support(self) -> None:
-        """Show the support Nuitka modal."""
         self.push_screen(SupportNuitkaModal())
 
     def compose(self) -> ComposeResult:
