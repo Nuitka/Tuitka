@@ -32,7 +32,6 @@ ModalScreen {
 
     #compilation_terminal {
         height: 1fr;
-        border: solid $primary;
         margin: 0 0 1 0;
     }
 
