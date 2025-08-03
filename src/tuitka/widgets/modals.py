@@ -1,9 +1,9 @@
-import asyncio
 from pathlib import Path
 from typing import Iterable
 from random import randint, uniform
+from textual.widgets import Collapsible, Markdown
 
-from textual import on, work
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import Grid, Horizontal, ScrollableContainer, Vertical
 from textual.reactive import reactive
@@ -12,11 +12,8 @@ from textual.message import Message
 from textual.geometry import Offset
 from textual.widgets import (
     Button,
-    Collapsible,
     DirectoryTree,
     Input,
-    Log,
-    Markdown,
     RadioButton,
     RadioSet,
     Select,

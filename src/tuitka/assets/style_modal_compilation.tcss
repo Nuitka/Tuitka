@@ -3,10 +3,9 @@ ModalScreen {
 
     Vertical {
         width: 90%;
-        max-width: 140;
-        height: 80%;
-        max-height: 35;
-        min-height: 20;
+        height: 85%;
+        max-width: 120;
+        max-height: 40;
         padding: 1;
         background: $surface;
     }
@@ -29,6 +28,12 @@ ModalScreen {
         background: $surface-lighten-1;
         border: solid $border;
         overflow-y: auto;
+    }
+
+    #compilation_terminal {
+        height: 1fr;
+        border: solid $primary;
+        margin: 0 0 1 0;
     }
 
     OutputLogger {
