@@ -2,10 +2,10 @@ ModalScreen {
     align: center middle;
 
     Vertical {
-        width: 90%;
+        width: 95%;
         height: 85%;
-        max-width: 120;
-        max-height: 40;
+        max-width: 200;
+        max-height: 100;
         padding: 1;
         background: $surface;
     }

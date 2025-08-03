@@ -296,8 +296,6 @@ class CompilationScreen(ModalScreen):
                 status_label.set_class(True, "error")
                 status_label.set_class(False, "in-progress")
 
-            self.dismiss()
-
     def on_mount(self) -> None:
         self.terminal = self.query_one("#compilation_terminal", TextualTerminal)
         self.set_timer(0.5, self.run_compilation)
