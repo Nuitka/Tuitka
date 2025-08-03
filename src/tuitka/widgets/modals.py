@@ -322,7 +322,7 @@ class CompilationScreen(ModalScreen):
             cmd_display = " ".join(cmd)  # noqa: F841
 
         script_path = Path(self.app.script)
-        command_to_run = " ".join(cmd)
+        command_to_run = " ".join(cmd) + "\n"
 
         self.terminal.input("clear\n")
 
