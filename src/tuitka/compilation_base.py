@@ -18,8 +18,11 @@ class CompilationMixin:
                 python_file, python_version, **nuitka_options
             )
 
-            command_to_run = " ".join(cmd) + " && exit"
+            command_to_run = " ".join(cmd) + "; exit"
+
             terminal.input("clear\n")
+            terminal.input(f"echo 'Executing: {command_to_run}'\n")
+
             if (
                 deps_metadata.dependencies
                 and deps_metadata.requirements_path != python_file

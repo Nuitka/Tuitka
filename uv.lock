@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.10"
 
 [[package]]
@@ -1098,6 +1098,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "nuitka" },
+    { name = "pillow" },
     { name = "rich-pixels" },
     { name = "textual" },
     { name = "textual-tty" },
@@ -1116,6 +1117,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "nuitka", specifier = ">=2.7.7" },
+    { name = "pillow", specifier = ">=11.3.0" },
     { name = "rich-pixels", specifier = ">=3.0.1" },
     { name = "textual", specifier = ">=3.2.0" },
     { name = "textual-tty", specifier = ">=0.2.1" },

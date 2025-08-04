@@ -1,9 +1,11 @@
+from pathlib import Path
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Vertical, Center, Container
 from textual.widgets import Button, Input, Static, Select
 from textual.widgets import RadioButton, RadioSet
 from tuitka.constants import PYTHON_VERSION
+from tuitka.utils import is_windows
 from tuitka.widgets.nuitka_header import NuitkaHeader
 
 from tuitka.widgets.modals import (
@@ -11,6 +13,9 @@ from tuitka.widgets.modals import (
     FileDialogScreen,
     NuitkaSettingsScreen,
 )
+
+if is_windows():
+    from tuitka.widgets.modals.direct_compilation import DirectCompilationScreen
 
 
 class ScriptInput(Input):
@@ -215,15 +220,26 @@ class ScriptInputWidget(Container):
             python_version_select = self.query_one("#python_version_select", Select)
             python_version = python_version_select.value
 
-            nuitka_options = {}
+            nuitka_options = {"--remove-output": True}
+
             if selected_preset.id == "onefile_preset":
                 nuitka_options["--onefile"] = True
             elif selected_preset.id == "standalone_preset":
                 nuitka_options["--standalone"] = True
             elif selected_preset.id == "custom_settings" and self.custom_settings:
-                nuitka_options = self.custom_settings
+                nuitka_options.update(self.custom_settings)
 
-            self.app.push_screen(CompilationScreen(python_version, **nuitka_options))
+            if is_windows():
+                script_path = Path(script_input.value.strip())
+                self.app.push_screen(
+                    DirectCompilationScreen(
+                        script_path, python_version, **nuitka_options
+                    )
+                )
+            else:
+                self.app.push_screen(
+                    CompilationScreen(python_version, **nuitka_options)
+                )
 
     def _handle_file_selection(self, selected_file: str | None) -> None:
         if selected_file:

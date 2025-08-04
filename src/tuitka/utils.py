@@ -8,8 +8,14 @@ from typing import Optional
 
 import sys
 import platform
+import shutil
+
 
 platform_name = platform.system().lower()
+
+
+def is_windows() -> bool:
+    return platform_name == "windows"
 
 
 @dataclass
@@ -186,8 +192,13 @@ def prepare_nuitka_command(
 ) -> tuple[list[str], DependenciesMetadata]:
     dependencies_metadata = parse_dependencies(script_path)
 
+    uv_path = shutil.which("uv") or "uv"
+
+    if is_windows() and " " in uv_path:
+        uv_path = f'"{uv_path}"'
+
     cmd = [
-        "uv",
+        uv_path,
         "--python-preference",
         "system",
         "run",
@@ -211,7 +222,13 @@ def prepare_nuitka_command(
                 if isinstance(item, str) and item.strip():
                     cmd.append(f"{flag}={item.strip()}")
 
-    cmd.append(script_path.as_posix())
+    if is_windows():
+        script_path_str = str(script_path.resolve())
+        if " " in script_path_str:
+            script_path_str = f'"{script_path_str}"'
+        cmd.append(script_path_str)
+    else:
+        cmd.append(script_path.as_posix())
 
     return cmd, dependencies_metadata
 
@@ -284,6 +301,7 @@ __all__ = [
     "prepare_nuitka_command",
     "create_nuitka_options_dict",
     "DependenciesMetadata",
+    "is_windows",
 ]
 
 

@@ -1,6 +1,13 @@
 import sys
+import platform
 
-PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
+if platform.system() == "Windows":  # Nuitka does not support 3.13 too well yet
+    if (sys.version_info.major, sys.version_info.minor) > (3, 12):
+        PYTHON_VERSION = "3.12"
+    else:
+        PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
+else:
+    PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
 
 sss_snek = r"""
   ____                  
