@@ -1,6 +1,7 @@
 import re
 import toml
 from contextlib import contextmanager
+from tuitka.constants import PYTHON_VERSION
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -181,7 +182,7 @@ def parse_dependencies(_path: str | Path) -> DependenciesMetadata:
 
 
 def prepare_nuitka_command(
-    script_path: Path, python_version: str = "3.11", **nuitka_options
+    script_path: Path, python_version: str = PYTHON_VERSION, **nuitka_options
 ) -> tuple[list[str], DependenciesMetadata]:
     dependencies_metadata = parse_dependencies(script_path)
 
