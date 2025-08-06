@@ -4,9 +4,9 @@ from textual.app import ComposeResult
 from textual.containers import Vertical, Center, Container
 from textual.widgets import Button, Input, Static, Select
 from textual.widgets import RadioButton, RadioSet
-from tuitka.constants import PYTHON_VERSION
-from tuitka.utils import is_windows
-from tuitka.widgets.nuitka_header import NuitkaHeader
+from tuitka.utils.platform import PYTHON_VERSION
+from tuitka.utils.platform import is_windows
+from tuitka.ui.components.header import NuitkaHeader
 
 from tuitka.widgets.modals import (
     CompilationScreen,

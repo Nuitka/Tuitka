@@ -5,14 +5,15 @@ from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Static, RichLog
-from tuitka.utils.platform import PYTHON_VERSION
+from textual.widgets import Button
 
+from tuitka.utils.platform import PYTHON_VERSION
 from tuitka.compilation.runners import create_runner
 from tuitka.assets import STYLE_MODAL_COMPILATION
+from tuitka.ui.components.compilation_view import CompilationView
 
 
-class DirectCompilationScreen(ModalScreen):
+class CompilationScreen(ModalScreen):
     CSS_PATH = STYLE_MODAL_COMPILATION
 
     compilation_finished: reactive[bool] = reactive(False, init=False)
@@ -26,17 +27,12 @@ class DirectCompilationScreen(ModalScreen):
         self.python_version = python_version
         self.nuitka_options = nuitka_options
         self.runner = create_runner()
-        self.log_widget = None
+        self.compilation_view = None
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            self.log_widget = RichLog(id="compilation_log", highlight=True, markup=True)
-            yield self.log_widget
-            yield Static(
-                "Compilation in progress...",
-                id="status_label",
-                classes="compilation-status in-progress",
-            )
+            self.compilation_view = CompilationView()
+            yield self.compilation_view
             with Horizontal(classes="compilation-controls"):
                 yield Button("Close", variant="default", id="btn_close", disabled=True)
                 yield Button("Cancel", variant="error", id="btn_cancel")
@@ -53,30 +49,21 @@ class DirectCompilationScreen(ModalScreen):
         if finished:
             close_btn = self.query_one("#btn_close", Button)
             cancel_btn = self.query_one("#btn_cancel", Button)
-            status_label = self.query_one("#status_label", Static)
 
             close_btn.disabled = False
             cancel_btn.disabled = True
 
-            if self.compilation_success:
-                status_label.update("✓ Compilation completed successfully!")
-                status_label.set_class(True, "success")
-                status_label.set_class(False, "in-progress")
-            else:
-                status_label.update("✗ Compilation failed!")
-                status_label.set_class(True, "error")
-                status_label.set_class(False, "in-progress")
+            self.compilation_view.compilation_success = self.compilation_success
+            self.compilation_view.compilation_finished = True
 
     def on_mount(self) -> None:
         self.runner.set_output_callback(self._handle_output)
         self.runner.set_completion_callback(self._handle_completion)
-
         self.set_timer(0.5, self.run_compilation)
 
     def _handle_output(self, line: str) -> None:
-        """Handle output from the compilation process."""
-        if self.log_widget:
-            self.log_widget.write(line)
+        if self.compilation_view:
+            self.compilation_view.write_output(line)
 
     def _handle_completion(self, exit_code: int) -> None:
         self.compilation_success = exit_code == 0

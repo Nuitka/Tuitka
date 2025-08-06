@@ -1,5 +1,4 @@
 import sys
-from tuitka.tui import NuitkaTUI
 from pathlib import Path
 
 
@@ -20,7 +19,7 @@ def main() -> None:
             )
             return
 
-        from tuitka.inline_app import InlineCompilationApp
+        from tuitka.apps.inline_app import InlineCompilationApp
 
         default_options = {
             "--onefile": True,
@@ -31,6 +30,8 @@ def main() -> None:
         inline_app = InlineCompilationApp(path, **default_options)
         inline_app.run(inline=True)
         return
+
+    from tuitka.apps.tui_app import NuitkaTUI
 
     app = NuitkaTUI()
     app.run()

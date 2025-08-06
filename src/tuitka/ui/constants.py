@@ -1,13 +1,4 @@
-import sys
-import platform
-
-if platform.system() == "Windows":  # Nuitka does not support 3.13 too well yet
-    if (sys.version_info.major, sys.version_info.minor) > (3, 12):
-        PYTHON_VERSION = "3.12"
-    else:
-        PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
-else:
-    PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
+"""UI-related constants like splash screen art and links."""
 
 sss_snek = r"""
   ____                  
@@ -17,6 +8,7 @@ sss_snek = r"""
    ___/ /                
   <_____/               
 """
+
 happy_snek_2 = r"""
         ____
        / o o\ 
@@ -26,7 +18,6 @@ happy_snek_2 = r"""
  <_______/
 """
 
-
 snek_1 = r"""
   _   
    /. .\___
@@ -35,7 +26,6 @@ snek_1 = r"""
  ___\/_____
 <_________/
 """
-
 
 face_snek = r"""
        ____     ____     ____     ____     ____     ____    
@@ -65,6 +55,7 @@ mythical_snek = r"""
 """
 
 SNAKE_ARTS = [sss_snek, happy_snek_2, snek_1, face_snek, mythical_snek]
+
 SPLASHSCREEN_LINKS = (
     "\n\nNuitka Github: \n\n[#fbdd58 underline]https://github.com/Nuitka/Nuitka[/]\n\n"
     "Tuitka Github: \n\n[#fbdd58 underline]https://github.com/KRRT7/tuitka[/]"

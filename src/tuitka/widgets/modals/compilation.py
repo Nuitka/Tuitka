@@ -6,14 +6,14 @@ from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static
-from tuitka.constants import PYTHON_VERSION
+from tuitka.utils.platform import PYTHON_VERSION
 from textual_tty.widgets import TextualTerminal
 
-from tuitka.compilation_base import CompilationMixin
+from tuitka.compilation.runners import create_runner
 from tuitka.assets import STYLE_MODAL_COMPILATION
 
 
-class CompilationScreen(CompilationMixin, ModalScreen):
+class CompilationScreen(ModalScreen):
     CSS_PATH = STYLE_MODAL_COMPILATION
 
     compilation_finished: reactive[bool] = reactive(False, init=False)
@@ -24,6 +24,7 @@ class CompilationScreen(CompilationMixin, ModalScreen):
         self.python_version = python_version
         self.nuitka_options = nuitka_options
         self.terminal = None
+        self.runner = None
 
     def compose(self) -> ComposeResult:
         with Vertical():
@@ -65,18 +66,21 @@ class CompilationScreen(CompilationMixin, ModalScreen):
 
     def on_mount(self) -> None:
         self.terminal = self.query_one("#compilation_terminal", TextualTerminal)
+        self.runner = create_runner(self.terminal)
         self.set_timer(0.5, self.run_compilation)
 
     def cancel_compilation(self) -> None:
-        if self.terminal:
-            self.terminal.stop_process()
+        if self.runner:
+            self.runner.stop_compilation()
 
-    def run_compilation(self) -> None:
+    async def run_compilation(self) -> None:
         script_path = Path(self.app.script)
-        self.start_compilation(
-            self.terminal, script_path, self.python_version, **self.nuitka_options
-        )
+        if self.runner:
+            await self.runner.run_compilation(
+                script_path, self.python_version, **self.nuitka_options
+            )
 
     @on(TextualTerminal.ProcessExited)
     def on_process_exited(self, event: TextualTerminal.ProcessExited) -> None:
-        self.handle_process_exited(event.exit_code)
+        self.compilation_success = event.exit_code == 0
+        self.compilation_finished = True

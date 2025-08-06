@@ -7,7 +7,7 @@ from textual.message import Message
 from textual.screen import ModalScreen
 from textual.widgets import Static
 
-from tuitka.constants import SNAKE_ARTS, SPLASHSCREEN_LINKS
+from tuitka.ui.constants import SNAKE_ARTS, SPLASHSCREEN_LINKS
 from tuitka.assets import STYLE_MODAL_SPLASHSCREEN
 
 

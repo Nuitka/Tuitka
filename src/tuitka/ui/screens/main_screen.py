@@ -4,10 +4,10 @@ from textual.widgets import Footer, Header
 
 from tuitka.assets import STYLE_MAIN
 from tuitka.widgets.modals import SplashScreen, SupportNuitkaModal
-from tuitka.widgets.script_input import ScriptInputWidget
+from tuitka.ui.components.script_input import ScriptInputWidget
 
 
-class NuitkaTUI(App):
+class MainScreen(App):
     CSS_PATH = STYLE_MAIN
     TITLE = "Tuitka - Nuitka Terminal UI"
     script: reactive[str] = reactive("", init=False)

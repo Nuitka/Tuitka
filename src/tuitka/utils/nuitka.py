@@ -1,21 +1,14 @@
 import re
 import toml
 from contextlib import contextmanager
-from tuitka.constants import PYTHON_VERSION
+from tuitka.utils.platform import PYTHON_VERSION
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+from tuitka.utils.platform import is_windows
 
 import sys
-import platform
 import shutil
-
-
-platform_name = platform.system().lower()
-
-
-def is_windows() -> bool:
-    return platform_name == "windows"
 
 
 @dataclass
@@ -301,7 +294,6 @@ __all__ = [
     "prepare_nuitka_command",
     "create_nuitka_options_dict",
     "DependenciesMetadata",
-    "is_windows",
 ]
 
 
