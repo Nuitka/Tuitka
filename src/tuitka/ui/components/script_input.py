@@ -42,13 +42,15 @@ class ScriptInputWidget(Container):
         width: 1fr;
         height: 1fr;
         align: center middle;
-        padding: 2;
+        padding: 1;
+        overflow-y: auto;
     }
 
     #main_container {
         width: 80%;
         max-width: 100;
         height: auto;
+        min-height: 100%;
         align: center middle;
     }
 
@@ -78,8 +80,8 @@ class ScriptInputWidget(Container):
         border: round $panel-lighten-2;
         width: 1fr;
         height: auto;
-        padding: 2;
-        margin-bottom: 2;
+        padding: 1;
+        margin-bottom: 1;
     }
 
     .group_title {
@@ -128,10 +130,13 @@ class ScriptInputWidget(Container):
         width: 1fr;
         height: auto;
         align: center middle;
+        margin-top: 2;
+        margin-bottom: 2;
     }
 
     #compile_button {
         width: auto;
+        min-width: 20;
     }
     """
 
