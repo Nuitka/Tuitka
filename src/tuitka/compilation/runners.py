@@ -55,19 +55,7 @@ class ProcessRunner(CompilationRunner):
             self._emit_output(f"Starting compilation of {python_file.name}...")
             self._emit_output(f"Command: {' '.join(cmd)}")
             self._emit_output("=" * 60)
-
-            if (
-                deps_metadata.dependencies
-                and deps_metadata.requirements_path != python_file
-            ):
-                self._emit_output(
-                    f"Dependencies: {', '.join(deps_metadata.dependencies)}"
-                )
-
-                with deps_metadata.temp_pep_723_file(python_file):
-                    return await self._execute_command(cmd)
-            else:
-                return await self._execute_command(cmd)
+            return await self._execute_command(cmd)
 
         except Exception as e:
             self._emit_output(f"ERROR: {e}")
@@ -138,14 +126,7 @@ class TerminalRunner(CompilationRunner):
             command_to_run = " ".join(cmd) + "; exit"
             self.terminal.input("clear\n")
 
-            if (
-                deps_metadata.dependencies
-                and deps_metadata.requirements_path != python_file
-            ):
-                with deps_metadata.temp_pep_723_file(python_file):
-                    self.terminal.input(command_to_run + "\n")
-            else:
-                self.terminal.input(command_to_run + "\n")
+            self.terminal.input(command_to_run + "\n")
 
             return 0
 

@@ -200,8 +200,12 @@ def prepare_nuitka_command(
         "--isolated",
         "--with",
         "nuitka",
-        "nuitka",
     ]
+
+    for dep in dependencies_metadata.dependencies:
+        cmd.extend(["--with", dep])
+
+    cmd.append("nuitka")
 
     for flag, value in nuitka_options.items():
         if value is None:
