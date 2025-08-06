@@ -1,14 +1,14 @@
 import asyncio
-import subprocess
 from pathlib import Path
 from typing import Optional, Callable
+from asyncio.subprocess import Process
 from tuitka.constants import PYTHON_VERSION
 from tuitka.utils import prepare_nuitka_command
 
 
 class DirectCompilationRunner:
     def __init__(self):
-        self.process: Optional[subprocess.Popen] = None
+        self.process: Optional[Process] = None
         self.output_callback: Optional[Callable[[str], None]] = None
         self.completion_callback: Optional[Callable[[int], None]] = None
 
@@ -53,28 +53,23 @@ class DirectCompilationRunner:
 
     async def _execute_command(self, cmd: list[str]) -> int:
         try:
-            self.process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1,
-                universal_newlines=True,
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
                 cwd=Path.cwd(),
             )
+            self.process = process
 
             while True:
-                output = self.process.stdout.readline()
-                if output == "" and self.process.poll() is not None:
+                output = await process.stdout.readline()
+                if not output:
                     break
-                if output:
-                    line = output.strip()
-                    if self.output_callback:
-                        self.output_callback(line)
+                line = output.decode().strip()
+                if self.output_callback:
+                    self.output_callback(line)
 
-                await asyncio.sleep(0.01)
-
-            exit_code = self.process.wait()
+            exit_code = await process.wait()
 
             if self.output_callback:
                 if exit_code == 0:
@@ -100,11 +95,14 @@ class DirectCompilationRunner:
         finally:
             self.process = None
 
-    def stop_compilation(self):
-        if self.process and self.process.poll() is None:
-            self.process.terminate()
+    async def stop_compilation(self):
+        if self.process:
             try:
-                self.process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self.process.kill()
-            self.process = None
+                self.process.terminate()
+                try:
+                    await asyncio.wait_for(self.process.wait(), timeout=5.0)
+                except asyncio.TimeoutError:
+                    self.process.kill()
+                    await self.process.wait()
+            finally:
+                self.process = None
