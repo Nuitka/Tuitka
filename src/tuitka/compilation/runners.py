@@ -1,4 +1,5 @@
 import asyncio
+import shlex
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable, Optional
@@ -123,7 +124,7 @@ class TerminalRunner(CompilationRunner):
                 python_file, python_version, **nuitka_options
             )
 
-            command_to_run = " ".join(cmd) + "; exit"
+            command_to_run = " ".join(shlex.quote(arg) for arg in cmd) + "; exit"
             self.terminal.input("clear\n")
 
             self.terminal.input(command_to_run + "\n")

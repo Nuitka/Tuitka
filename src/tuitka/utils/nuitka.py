@@ -180,10 +180,55 @@ def parse_dependencies(_path: str | Path) -> DependenciesMetadata:
     return parser.parse()
 
 
+def _apply_smart_plugin_detection(
+    dependencies_metadata: DependenciesMetadata, nuitka_options: dict
+) -> None:
+    library_patterns = {
+        "pyside6": ["pyside6"]
+    }
+
+    # Plugin mapping: library -> required compilation modes -> plugin name
+    plugin_rules = {
+        "pyside6": {
+            "required_modes": ["--standalone", "--onefile"],
+            "plugin_name": "pyside6",
+        }
+    }
+
+    detected_libraries = set()
+    for library, patterns in library_patterns.items():
+        if any(
+            any(dep.lower().startswith(pattern.lower()) for pattern in patterns)
+            for dep in dependencies_metadata.dependencies
+        ):
+            detected_libraries.add(library)
+
+    for library in detected_libraries:
+        if library in plugin_rules:
+            rule = plugin_rules[library]
+
+            has_required_mode = any(
+                nuitka_options.get(mode) for mode in rule["required_modes"]
+            )
+
+            if has_required_mode:
+                enable_plugins = nuitka_options.get("--enable-plugin", [])
+                if isinstance(enable_plugins, str):
+                    enable_plugins = [enable_plugins]
+                elif not isinstance(enable_plugins, list):
+                    enable_plugins = []
+
+                if rule["plugin_name"] not in enable_plugins:
+                    enable_plugins.append(rule["plugin_name"])
+                    nuitka_options["--enable-plugin"] = enable_plugins
+
+
 def prepare_nuitka_command(
     script_path: Path, python_version: str = PYTHON_VERSION, **nuitka_options
 ) -> tuple[list[str], DependenciesMetadata]:
     dependencies_metadata = parse_dependencies(script_path)
+
+    _apply_smart_plugin_detection(dependencies_metadata, nuitka_options)
 
     uv_path = shutil.which("uv") or "uv"
 
