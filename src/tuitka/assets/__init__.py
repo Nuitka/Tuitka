@@ -16,8 +16,8 @@ STYLE_MODAL_SUPPORT = get_asset_path("style_modal_support.tcss")
 
 NUITKA_LOGO = get_asset_path("logo/nuitka.png")
 
-CONTENT_SUPPORT_NUITKA = get_asset_path("content/support_nuitka.md").read_text()
-CONTENT_COMMERCIAL = get_asset_path("content/commercial.md").read_text()
+CONTENT_SUPPORT_NUITKA = get_asset_path("content/support_nuitka.md").read_text(encoding="utf-8")
+CONTENT_COMMERCIAL = get_asset_path("content/commercial.md").read_text(encoding="utf-8")
 
 __all__ = [
     "get_asset_path",
