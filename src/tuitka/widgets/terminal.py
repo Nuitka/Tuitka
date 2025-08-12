@@ -80,8 +80,5 @@ class TuitkaTerminal(TextualTerminal):
 				pass
 
 
-# Re-export the ProcessExited message class for compatibility
-ProcessExited = TextualTerminal.ProcessExited
-
-__all__ = ["TuitkaTerminal", "ProcessExited"]
+__all__ = ["TuitkaTerminal"]
 
