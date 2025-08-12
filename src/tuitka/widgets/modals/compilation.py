@@ -7,7 +7,7 @@ from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static
 from tuitka.constants import PYTHON_VERSION
-from textual_tty.widgets import TextualTerminal
+from tuitka.widgets.terminal import TuitkaTerminal
 
 from tuitka.compilation_base import CompilationMixin
 from tuitka.assets import STYLE_MODAL_COMPILATION
@@ -27,7 +27,7 @@ class CompilationScreen(CompilationMixin, ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            yield TextualTerminal(id="compilation_terminal")
+            yield TuitkaTerminal(id="compilation_terminal")
             yield Static(
                 "Compilation in progress...",
                 id="status_label",
@@ -64,7 +64,7 @@ class CompilationScreen(CompilationMixin, ModalScreen):
                 status_label.set_class(False, "in-progress")
 
     def on_mount(self) -> None:
-        self.terminal = self.query_one("#compilation_terminal", TextualTerminal)
+        self.terminal = self.query_one("#compilation_terminal", TuitkaTerminal)
         self.set_timer(0.5, self.run_compilation)
 
     def cancel_compilation(self) -> None:
@@ -77,6 +77,6 @@ class CompilationScreen(CompilationMixin, ModalScreen):
             self.terminal, script_path, self.python_version, **self.nuitka_options
         )
 
-    @on(TextualTerminal.ProcessExited)
-    def on_process_exited(self, event: TextualTerminal.ProcessExited) -> None:
+    @on(TuitkaTerminal.ProcessExited)
+    def on_process_exited(self, event: TuitkaTerminal.ProcessExited) -> None:
         self.handle_process_exited(event.exit_code)

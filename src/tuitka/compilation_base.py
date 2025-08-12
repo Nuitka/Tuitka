@@ -1,6 +1,6 @@
 from pathlib import Path
 from tuitka.constants import PYTHON_VERSION
-from textual_tty.widgets import TextualTerminal
+from tuitka.widgets.terminal import TuitkaTerminal
 
 from tuitka.utils import prepare_nuitka_command
 
@@ -8,7 +8,7 @@ from tuitka.utils import prepare_nuitka_command
 class CompilationMixin:
     def start_compilation(
         self,
-        terminal: TextualTerminal,
+    terminal: TuitkaTerminal,
         python_file: Path,
         python_version: str = PYTHON_VERSION,
         **nuitka_options,

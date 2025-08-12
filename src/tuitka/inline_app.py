@@ -2,7 +2,7 @@ from pathlib import Path
 from textual.app import App, ComposeResult
 from textual.containers import Vertical
 from textual.reactive import reactive
-from textual_tty.widgets import TextualTerminal
+from tuitka.widgets.terminal import TuitkaTerminal
 from tuitka.constants import PYTHON_VERSION
 from textual import on
 
@@ -29,19 +29,19 @@ class InlineCompilationApp(CompilationMixin, App):
     def compose(self) -> ComposeResult:
         with Vertical(id="terminal-container"):
             yield NuitkaHeader()
-            yield TextualTerminal(id="compilation_terminal", command=get_default_shell())
+            yield TuitkaTerminal(id="compilation_terminal", command=get_default_shell())
 
     def on_mount(self) -> None:
-        self.terminal = self.query_one("#compilation_terminal", TextualTerminal)
-        self.set_timer(0.1, self._start_compilation)
+            self.terminal = self.query_one("#compilation_terminal", TuitkaTerminal)
+            self.set_timer(0.1, self._start_compilation)
 
     def _start_compilation(self) -> None:
         self.start_compilation(
             self.terminal, self.python_file, self.python_version, **self.nuitka_options
         )
 
-    @on(TextualTerminal.ProcessExited)
-    def on_process_exited(self, event: TextualTerminal.ProcessExited) -> None:
+    @on(TuitkaTerminal.ProcessExited)
+    def on_process_exited(self, event: TuitkaTerminal.ProcessExited) -> None:
         self.handle_process_exited(event.exit_code)
 
     def watch_compilation_finished(self, finished: bool) -> None:
