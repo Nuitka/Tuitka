@@ -9,6 +9,7 @@ from textual import on
 from tuitka.compilation_base import CompilationMixin
 from tuitka.assets import STYLE_INLINE_APP
 from tuitka.widgets.nuitka_header import NuitkaHeader
+from tuitka.utils import get_default_shell
 
 
 class InlineCompilationApp(CompilationMixin, App):
@@ -28,7 +29,7 @@ class InlineCompilationApp(CompilationMixin, App):
     def compose(self) -> ComposeResult:
         with Vertical(id="terminal-container"):
             yield NuitkaHeader()
-            yield TextualTerminal(id="compilation_terminal")
+            yield TextualTerminal(id="compilation_terminal", command=get_default_shell())
 
     def on_mount(self) -> None:
         self.terminal = self.query_one("#compilation_terminal", TextualTerminal)

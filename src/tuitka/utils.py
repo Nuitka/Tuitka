@@ -1,3 +1,4 @@
+import os
 import re
 import toml
 from contextlib import contextmanager
@@ -5,6 +6,7 @@ from tuitka.constants import PYTHON_VERSION
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+import shutil
 
 import sys
 import platform
@@ -280,10 +282,30 @@ def create_nuitka_options_dict() -> dict[str, dict[str, dict]]:
     return options_dict
 
 
+def get_default_shell() -> str:
+    """Get the default shell command for the current platform."""
+    if platform_name == "windows":
+        if shutil.which("pwsh"):
+            return "pwsh"
+        elif shutil.which("powershell"):
+            return "powershell"
+        else:
+            return "cmd"
+    else:
+        shell = os.environ.get("SHELL")
+        if shell and shutil.which(shell):
+            return shell
+        for shell in ["/bin/bash", "/bin/sh", "/usr/bin/bash"]:
+            if os.path.exists(shell):
+                return shell
+        return "sh"  # Final fallback
+
+
 __all__ = [
     "prepare_nuitka_command",
     "create_nuitka_options_dict",
     "DependenciesMetadata",
+    "get_default_shell"
 ]
 
 
