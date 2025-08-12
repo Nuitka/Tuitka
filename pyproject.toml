@@ -34,6 +34,3 @@ dev = [
 
 [tool.ruff]
 extend-exclude = ["tests/compilation"]
-
-[tool.uv.sources]
-textual-window = { git = "https://github.com/KRRT7/textual-window.git" }
