@@ -31,18 +31,6 @@ from tuitka.utils import get_default_shell
 
 
 class TuitkaTerminal(TextualTerminal):
-	"""Terminal widget with Tuitka defaults.
-
-	Parameters
-	- command: str | Sequence[str] | None
-		Command to spawn for the PTY. When None, the platform's default shell is used.
-		Accepts a string (will be passed through) or a list of argv tokens.
-	- show_mouse: bool
-		When True, enables mouse cursor/reporting inside the terminal (useful for
-		asciinema recordings). We'll also try to disable it on unmount.
-	- kwargs: forwarded to TextualTerminal
-	"""
-
 	# Keep CSS minimal to let parent containers control size; users can style via IDs
 	DEFAULT_CSS = """
 	TuitkaTerminal {
@@ -62,21 +50,16 @@ class TuitkaTerminal(TextualTerminal):
 			command = get_default_shell()
 
 		super().__init__(command=command, **kwargs)
-		# TextualTerminal supports a property to render the mouse cursor
-		# (also turns on mouse reporting to the child process)
 		self.show_mouse = bool(show_mouse)
 		self._mouse_enabled = bool(show_mouse)
 
 	def on_unmount(self) -> None:  # type: ignore[override]
 		"""Disable mouse reporting on teardown to avoid leaving the TTY dirty."""
 		if self._mouse_enabled:
-			# Best-effort: disable a few common mouse reporting modes
-			# Ref: xterm mouse tracking modes
 			try:
 				sys.stdout.write("\033[?1003l\033[?1000l\033[?1015l\033[?1006l")
 				sys.stdout.flush()
 			except Exception:
-				# Don't fail app shutdown if terminal isn't writable
 				pass
 
 
