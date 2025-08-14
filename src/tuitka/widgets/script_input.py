@@ -5,6 +5,7 @@ from textual.widgets import Button, Input, Static, Select
 from textual.widgets import RadioButton, RadioSet
 from tuitka.constants import PYTHON_VERSION
 from tuitka.widgets.nuitka_header import NuitkaHeader
+from pathlib import Path
 
 from tuitka.widgets.modals import (
     CompilationScreen,
@@ -24,7 +25,7 @@ class ScriptInput(Input):
 
     def on_input_changed(self, event: Input.Changed) -> None:
         """Update app script when input changes."""
-        self.app.script = self.value.strip()
+        self.app.script = Path(self.value.strip())
 
 
 class ScriptInputWidget(Container):

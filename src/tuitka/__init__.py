@@ -1,11 +1,12 @@
 import sys
 from tuitka.tui import NuitkaTUI
 from pathlib import Path
+from tuitka.utils import chdir_context
 
 
 def main() -> None:
     if len(sys.argv) > 1:
-        path = Path(sys.argv[1])
+        path = Path(sys.argv[1]).resolve()
         if not path.is_file() or not path.suffix == ".py":
             from rich import print
             from rich.panel import Panel
@@ -27,10 +28,11 @@ def main() -> None:
             "--assume-yes-for-downloads": True,
             "--remove-output": True,
         }
-
-        inline_app = InlineCompilationApp(path, **default_options)
-        inline_app.run(inline=True)
-        return
+        
+        with chdir_context(path.parent):
+            inline_app = InlineCompilationApp(path, **default_options)
+            inline_app.run(inline=True)
+            return
 
     app = NuitkaTUI()
     app.run()

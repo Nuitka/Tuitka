@@ -10,8 +10,19 @@ import shutil
 
 import sys
 import platform
+from os import chdir
 
 platform_name = platform.system().lower()
+
+
+@contextmanager
+def chdir_context(path: Path):
+    original_cwd = Path.cwd()
+    try:
+        chdir(path)
+        yield
+    finally:
+        chdir(original_cwd)
 
 
 @dataclass
@@ -198,8 +209,12 @@ def prepare_nuitka_command(
         "--isolated",
         "--with",
         "nuitka",
-        "nuitka",
     ]
+    if dependencies_metadata.dependencies:
+        for dependency in dependencies_metadata.dependencies:
+            cmd.extend(["--with", dependency])
+
+    cmd.append("nuitka")
 
     for flag, value in nuitka_options.items():
         if value is None:
@@ -285,6 +300,7 @@ def create_nuitka_options_dict() -> dict[str, dict[str, dict]]:
 def get_default_shell() -> str:
     """Get the default shell command for the current platform."""
     if platform_name == "windows":
+        return "cmd"
         if shutil.which("pwsh"):
             return "pwsh"
         elif shutil.which("powershell"):
@@ -305,7 +321,7 @@ __all__ = [
     "prepare_nuitka_command",
     "create_nuitka_options_dict",
     "DependenciesMetadata",
-    "get_default_shell"
+    "get_default_shell",
 ]
 
 
