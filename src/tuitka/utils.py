@@ -1,6 +1,7 @@
 import os
 import re
 import toml
+import ast
 from contextlib import contextmanager
 from tuitka.constants import PYTHON_VERSION
 from dataclasses import dataclass
@@ -12,7 +13,19 @@ import sys
 import platform
 from os import chdir
 
+
 platform_name = platform.system().lower()
+
+
+def error(message: str, title: str = "Error", subtitle: Optional[str] = None):
+    from rich import print
+    from rich.panel import Panel
+
+    panel_kwargs = {"title": title, "border_style": "red"}
+    if subtitle:
+        panel_kwargs["subtitle"] = subtitle
+
+    print(Panel.fit(message, **panel_kwargs))
 
 
 @contextmanager
@@ -132,23 +145,21 @@ class DependencyParser:
 
         return list(set(deps))
 
-    def _find_project_root(self) -> Optional[Path]:
-        start_dir = self.path.parent if self.path.is_file() else self.path
-        current_path = start_dir.resolve()
-        root = Path(current_path.anchor)
-
-        temp_path = current_path
-        while True:
-            if (
-                (temp_path / "pyproject.toml").exists()
-                or (temp_path / ".git").exists()
-                or (temp_path / "requirements.txt").exists()
-            ):
-                return temp_path
-            if temp_path == root:
-                break
-            temp_path = temp_path.parent
-        return None
+    def scan_for_imports(self, script: str) -> list[str]:
+        try:
+            tree = ast.parse(script)
+            imports = set()
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        imports.add(alias.name.split(".")[0])
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        imports.add(node.module.split(".")[0])
+            std_libs = set(sys.stdlib_module_names)
+            return sorted(list(imports - std_libs))
+        except SyntaxError:
+            return []
 
     def parse(self) -> DependenciesMetadata:
         if not self.path or not self.path.exists():
@@ -163,11 +174,8 @@ class DependencyParser:
                     dependencies=dependencies, requirements_path=self.path
                 )
 
-        # Find project root and search for dependency files
-        project_root = self._find_project_root()
-        search_dir = project_root or (
-            self.path.parent if self.path.is_file() else self.path
-        )
+        # Search for dependency files in the parent directory
+        search_dir = self.path.parent
 
         # Try pyproject.toml first
         pyproject_candidate = search_dir / "pyproject.toml"
@@ -184,6 +192,17 @@ class DependencyParser:
             return DependenciesMetadata(
                 dependencies=dependencies, requirements_path=requirements_candidate
             )
+
+        if self.path.is_file() and self.path.suffix == ".py":
+            script = self.path.read_text(encoding="utf-8")
+            third_party_imports = self.scan_for_imports(script)
+            if third_party_imports:
+                error(
+                    f"Detected the following third-party imports: {', '.join(third_party_imports)}.\n"
+                    "There must be a pyproject.toml or requirements.txt file in the same directory as the script.\n"
+                    "Alternatively, you can use PEP 723 metadata in the script to specify dependencies."
+                )
+                raise SystemExit
 
         return DependenciesMetadata(dependencies=[], requirements_path=None)
 
@@ -204,6 +223,7 @@ def prepare_nuitka_command(
         "--python-preference",
         "system",
         "run",
+        "--no-project",
         "--python",
         python_version,
         "--isolated",
