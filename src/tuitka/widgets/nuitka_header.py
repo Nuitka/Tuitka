@@ -6,8 +6,6 @@ from tuitka.assets import NUITKA_LOGO
 
 
 class NuitkaHeader(Vertical):
-    """Reusable header widget displaying the Nuitka logo and website link."""
-
     DEFAULT_CSS = """
     NuitkaHeader {
         height: auto;

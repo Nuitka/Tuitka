@@ -1,7 +1,7 @@
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Vertical, Center, Container
-from textual.widgets import Button, Input, Static, Select
+from textual.widgets import Button, Input, Static
 from textual.widgets import RadioButton, RadioSet
 from tuitka.constants import PYTHON_VERSION
 from tuitka.widgets.nuitka_header import NuitkaHeader
@@ -38,11 +38,11 @@ class ScriptInputWidget(Container):
         width: 1fr;
         height: 1fr;
         align: center middle;
-        padding: 2;
+        padding: 1;
     }
 
     #main_container {
-        width: 80%;
+        width: 85%;
         max-width: 100;
         height: auto;
         align: center middle;
@@ -51,14 +51,14 @@ class ScriptInputWidget(Container):
     #title_label {
         text-align: center;
         color: $text-muted;
-        margin-bottom: 2;
+        margin-bottom: 1;
         width: 1fr;
     }
 
     #input_section {
         width: 1fr;
         height: auto;
-        margin-bottom: 2;
+        margin-bottom: 1;
     }
 
     #script_input {
@@ -74,8 +74,8 @@ class ScriptInputWidget(Container):
         border: round $panel-lighten-2;
         width: 1fr;
         height: auto;
-        padding: 2;
-        margin-bottom: 2;
+        padding: 1;
+        margin-bottom: 1;
     }
 
     .group_title {
@@ -86,21 +86,24 @@ class ScriptInputWidget(Container):
     }
 
     .sub_title {
-        margin-top: 1;
-        margin-bottom: 1;
+        margin-top: 0;
+        margin-bottom: 0;
         color: $text-muted;
         width: 1fr;
     }
 
+    /* disabled for now */
     #python_version_select {
+        display: none;
         width: 1fr;
-        margin-top: 1;
+        margin-top: 0;
     }
 
     #settings_radioset {
         height: auto;
         width: 1fr;
-        margin-top: 1;
+        margin-top: 0;
+        margin-bottom: 0;
         align: center middle;
         layout: horizontal;
     }
@@ -124,6 +127,8 @@ class ScriptInputWidget(Container):
         width: 1fr;
         height: auto;
         align: center middle;
+        margin-top: 0;
+        margin-bottom: 0;
     }
 
     #compile_button {
@@ -152,19 +157,20 @@ class ScriptInputWidget(Container):
                     yield RadioButton("Standalone", id="standalone_preset")
                     yield RadioButton("Custom", id="custom_settings")
 
-                yield Static("Python Version", classes="sub_title")
-                yield Select(
-                    [
-                        ("3.8", "3.8"),
-                        ("3.9", "3.9"),
-                        ("3.10", "3.10"),
-                        ("3.11", "3.11"),
-                        ("3.12", "3.12"),
-                    ],
-                    value=PYTHON_VERSION,
-                    allow_blank=False,
-                    id="python_version_select",
-                )
+                # Python version selection temporarily disabled - using current Python version
+                # yield Static("Python Version", classes="sub_title")
+                # yield Select(
+                #     [
+                #         ("3.8", "3.8"),
+                #         ("3.9", "3.9"),
+                #         ("3.10", "3.10"),
+                #         ("3.11", "3.11"),
+                #         ("3.12", "3.12"),
+                #     ],
+                #     value=PYTHON_VERSION,
+                #     allow_blank=False,
+                #     id="python_version_select",
+                # )
 
             with Center(id="compile_button_container"):
                 yield Button("Compile", variant="success", id="compile_button")
@@ -213,8 +219,7 @@ class ScriptInputWidget(Container):
             if selected_preset is None:
                 return
 
-            python_version_select = self.query_one("#python_version_select", Select)
-            python_version = python_version_select.value
+            python_version = PYTHON_VERSION
 
             nuitka_options = {}
             if selected_preset.id == "onefile_preset":
