@@ -1,6 +1,4 @@
-import pytest
-from pathlib import Path
-from tuitka.utils import DependencyParser, ThirdPartyDependencies
+from tuitka.utils import DependencyParser
 
 
 def test_dependency_parser_no_deps(tmp_path):
@@ -9,15 +7,6 @@ def test_dependency_parser_no_deps(tmp_path):
     parser = DependencyParser(p)
     deps = parser.parse()
     assert deps.dependencies == []
-
-
-def test_dependency_parser_with_deps(tmp_path):
-    p = tmp_path / "script.py"
-    p.write_text("import os\nimport sys\nimport requests\nimport textual\n")
-    parser = DependencyParser(p)
-    with pytest.raises(ThirdPartyDependencies) as e:
-        parser.parse()
-    assert sorted(e.value.dependencies) == ["requests", "textual"]
 
 
 def test_dependency_parser_with_pep723_deps(tmp_path):

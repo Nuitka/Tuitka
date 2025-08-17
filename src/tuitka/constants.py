@@ -71,7 +71,7 @@ SNAKE_FACTS = [
     "Odd bug (pre-Python 3.5): `time(0,0,0)` evaluated to False. Not anymore!",
     "Python's `__debug__` is True by default, but can be set to False with `-O` flag.",
     "try `import this` for the Zen of Python, a collection of guiding principles.",
-    "Nuitka is short for Annuitka, which is the nickname Nuitka's author uses for his wife Anna."
+    "Nuitka is short for Annuitka, which is the nickname Nuitka's author uses for his wife Anna.",
 ]
 
 SPLASHSCREEN_LINKS = (
