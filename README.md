@@ -14,15 +14,15 @@ Tuitka is a Terminal User Interface (TUI) wrapper that leverages Nuitka under th
 
 ### Splash Screen
 Shows the Nuitka branding on startup
-![Splash Screen](images/Splash_screen.png)
+![Splash Screen](https://raw.githubusercontent.com/Nuitka/Tuitka/refs/heads/main/images/Splash_screen.png)
 
 ### Script Selection
 Browse and select Python scripts to compile with an interactive file dialog
-![Script Input](images/script_input.png)
+![Script Input](https://raw.githubusercontent.com/Nuitka/Tuitka/refs/heads/main/images/script_input.png)
 
 ### Settings Configuration
 Configure Nuitka compilation settings and flags through an intuitive UI
-![Settings UI](images/settings_ui.png)
+![Settings UI](https://raw.githubusercontent.com/Nuitka/Tuitka/refs/heads/main/images/settings_ui.png)
 
 ## Usage
 
