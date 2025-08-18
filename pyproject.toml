@@ -21,7 +21,6 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/Nuitka/Tuitka"
-Documentation = "None yet"
 Repository = "https://github.com/Nuitka/Tuitka.git"
 
 [project.scripts]
