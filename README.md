@@ -13,7 +13,6 @@ Tuitka is a Terminal User Interface (TUI) wrapper that leverages Nuitka under th
 - Smart plugin detection based on imported libraries
 
 ### Splash Screen
-Shows the Nuitka branding on startup
 ![Splash Screen](https://raw.githubusercontent.com/Nuitka/Tuitka/refs/heads/main/images/Splash_screen.png)
 
 ### Script Selection
