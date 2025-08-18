@@ -1,4 +1,3 @@
-from pathlib import Path
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Vertical, Center, Container
@@ -13,9 +12,6 @@ from tuitka.widgets.modals import (
     FileDialogScreen,
     NuitkaSettingsScreen,
 )
-
-if is_windows():
-    from tuitka.widgets.modals.direct_compilation import DirectCompilationScreen
 
 
 class ScriptInput(Input):
@@ -49,7 +45,6 @@ class ScriptInputWidget(Container):
         width: 85%;
         max-width: 100;
         height: auto;
-        min-height: 100%;
         align: center middle;
     }
 
@@ -138,7 +133,6 @@ class ScriptInputWidget(Container):
 
     #compile_button {
         width: auto;
-        min-width: 20;
     }
     """
 
@@ -236,19 +230,9 @@ class ScriptInputWidget(Container):
             elif selected_preset.id == "standalone_preset":
                 nuitka_options["--standalone"] = True
             elif selected_preset.id == "custom_settings" and self.custom_settings:
-                nuitka_options.update(self.custom_settings)
+                nuitka_options = self.custom_settings
 
-            if is_windows():
-                script_path = Path(script_input.value.strip())
-                self.app.push_screen(
-                    DirectCompilationScreen(
-                        script_path, python_version, **nuitka_options
-                    )
-                )
-            else:
-                self.app.push_screen(
-                    CompilationScreen(python_version, **nuitka_options)
-                )
+            self.app.push_screen(CompilationScreen(python_version, **nuitka_options))
 
     def _handle_file_selection(self, selected_file: str | None) -> None:
         if selected_file:

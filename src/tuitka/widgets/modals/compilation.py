@@ -6,7 +6,7 @@ from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Static
-from tuitka.utils.platform import PYTHON_VERSION
+from tuitka.constants import PYTHON_VERSION
 from textual_tty.widgets import TextualTerminal
 from tuitka.utils import prepare_nuitka_command
 from tuitka.assets import STYLE_MODAL_COMPILATION
@@ -77,8 +77,8 @@ class CompilationScreen(ModalScreen):
         self.terminal = self.query_one("#compilation_terminal", TextualTerminal)
 
     def cancel_compilation(self) -> None:
-        if self.runner:
-            self.runner.stop_compilation()
+        if self.terminal:
+            self.terminal.stop_process()
 
     @on(TextualTerminal.ProcessExited)
     def on_process_exited(self, event: TextualTerminal.ProcessExited) -> None:

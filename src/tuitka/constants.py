@@ -1,4 +1,6 @@
-"""UI-related constants like splash screen art and links."""
+import sys
+
+PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
 
 sss_snek = r"""
     ____                  
@@ -8,7 +10,6 @@ sss_snek = r"""
      ___/ /                
     <_____/               
 """
-
 happy_snek_2 = r"""
         ____
        / o o\ 
@@ -18,6 +19,7 @@ happy_snek_2 = r"""
  <_______/
 """
 
+
 snek_1 = r"""
     _   
      /. .\___
@@ -26,6 +28,7 @@ snek_1 = r"""
    ___\/_____
   <_________/
 """
+
 
 face_snek = r"""
        ____     ____     ____     ____     ____     ____    

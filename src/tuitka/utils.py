@@ -210,49 +210,6 @@ def parse_dependencies(_path: str | Path) -> DependenciesMetadata:
     return parser.parse()
 
 
-def _apply_smart_plugin_detection(
-    dependencies_metadata: DependenciesMetadata, nuitka_options: dict
-) -> None:
-    library_patterns = {
-        "pyside6": ["pyside6"]
-    }
-
-    # Plugin mapping: library -> required compilation modes -> plugin name
-    plugin_rules = {
-        "pyside6": {
-            "required_modes": ["--standalone", "--onefile"],
-            "plugin_name": "pyside6",
-        }
-    }
-
-    detected_libraries = set()
-    for library, patterns in library_patterns.items():
-        if any(
-            any(dep.lower().startswith(pattern.lower()) for pattern in patterns)
-            for dep in dependencies_metadata.dependencies
-        ):
-            detected_libraries.add(library)
-
-    for library in detected_libraries:
-        if library in plugin_rules:
-            rule = plugin_rules[library]
-
-            has_required_mode = any(
-                nuitka_options.get(mode) for mode in rule["required_modes"]
-            )
-
-            if has_required_mode:
-                enable_plugins = nuitka_options.get("--enable-plugin", [])
-                if isinstance(enable_plugins, str):
-                    enable_plugins = [enable_plugins]
-                elif not isinstance(enable_plugins, list):
-                    enable_plugins = []
-
-                if rule["plugin_name"] not in enable_plugins:
-                    enable_plugins.append(rule["plugin_name"])
-                    nuitka_options["--enable-plugin"] = enable_plugins
-
-
 def prepare_nuitka_command(
     script_path: Path, python_version: str = PYTHON_VERSION, **nuitka_options
 ) -> tuple[list[str], DependenciesMetadata]:
@@ -281,15 +238,8 @@ def prepare_nuitka_command(
             if plugin_flag not in nuitka_options:
                 nuitka_options[plugin_flag] = enabled
 
-    _apply_smart_plugin_detection(dependencies_metadata, nuitka_options)
-
-    uv_path = shutil.which("uv") or "uv"
-
-    if is_windows() and " " in uv_path:
-        uv_path = f'"{uv_path}"'
-
     cmd = [
-        uv_path,
+        "uv",
         "--python-preference",
         "system",
         "run",
@@ -303,11 +253,6 @@ def prepare_nuitka_command(
             cmd.extend(["--with", dependency])
     cmd.extend(["--with", "nuitka", "-m", "nuitka"])
 
-    for dep in dependencies_metadata.dependencies:
-        cmd.extend(["--with", dep])
-
-    cmd.append("nuitka")
-
     for flag, value in nuitka_options.items():
         if value is None:
             continue
@@ -320,13 +265,7 @@ def prepare_nuitka_command(
                 if isinstance(item, str) and item.strip():
                     cmd.append(f"{flag}={item.strip()}")
 
-    if is_windows():
-        script_path_str = str(script_path.resolve())
-        if " " in script_path_str:
-            script_path_str = f'"{script_path_str}"'
-        cmd.append(script_path_str)
-    else:
-        cmd.append(script_path.as_posix())
+    cmd.append(script_path.as_posix())
 
     return cmd, dependencies_metadata
 
