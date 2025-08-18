@@ -4,7 +4,7 @@ from textual.containers import Horizontal, ScrollableContainer
 from textual.screen import ModalScreen
 from textual.widgets import Button, Collapsible, Input, Static
 
-from tuitka.utils.nuitka import create_nuitka_options_dict
+from tuitka.utils import create_nuitka_options_dict
 from tuitka.assets import STYLE_MODAL_SETTINGS
 from .settings_widgets import (
     ModalBoolFlag,
