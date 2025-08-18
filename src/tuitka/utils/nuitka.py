@@ -1,22 +1,48 @@
+import os
 import re
 import toml
+import ast
 from contextlib import contextmanager
-from tuitka.utils.platform import PYTHON_VERSION
-from dataclasses import dataclass
+from tuitka.constants import PYTHON_VERSION
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-from tuitka.utils.platform import is_windows
+import shutil
 
 import sys
-import shutil
+import platform
+from os import chdir
+
+
+platform_name = platform.system().lower()
+
+
+def error(message: str, title: str = "Error", subtitle: Optional[str] = None):
+    from rich import print
+    from rich.panel import Panel
+
+    panel_kwargs = {"title": title, "border_style": "red"}
+    if subtitle:
+        panel_kwargs["subtitle"] = subtitle
+
+    print(Panel.fit(message, **panel_kwargs))
+
+
+@contextmanager
+def chdir_context(path: Path):
+    original_cwd = Path.cwd()
+    try:
+        chdir(path)
+        yield
+    finally:
+        chdir(original_cwd)
 
 
 @dataclass
 class DependenciesMetadata:
     dependencies: list[str]
-    requirements_path: Optional[Path] = (
-        None  # Path to the source file where dependencies were parsed from
-    )
+    requirements_path: Optional[Path] = None
+    detected_imports: list[str] = field(default_factory=list)
 
     def to_pep_723(self) -> str:
         script_metadata = {"dependencies": self.dependencies}
@@ -38,7 +64,7 @@ class DependenciesMetadata:
             file_path.write_text(original_content, encoding="utf-8")
 
 
-def _extract_dependencies_from_table(dep_table: dict) -> list[str]:
+def extract_dependencies_from_table(dep_table: dict) -> list[str]:
     deps = []
     for name, value in dep_table.items():
         if name == "python":
@@ -71,7 +97,7 @@ class DependencyParser:
     def __init__(self, path: Path):
         self.path = path
 
-    def _parse_pep_723(self, script: str) -> list[str]:
+    def parse_pep_723(self, script: str) -> list[str]:
         name = "script"
         matches = list(
             filter(
@@ -89,13 +115,13 @@ class DependencyParser:
         )
         return toml.loads(content).get("dependencies", [])
 
-    def _parse_requirements_txt(self, requirements_path: Path) -> list[str]:
+    def parse_requirements_txt(self, requirements_path: Path) -> list[str]:
         lines = requirements_path.read_text(encoding="utf-8").splitlines()
         return [
             line.strip() for line in lines if line.strip() and not line.startswith("#")
         ]
 
-    def _parse_pyproject_toml(self, pyproject_path: Path) -> list[str]:
+    def parse_pyproject_toml(self, pyproject_path: Path) -> list[str]:
         content = pyproject_path.read_text(encoding="utf-8")
         pyproject_dict = toml.loads(content)
         deps = []
@@ -104,7 +130,7 @@ class DependencyParser:
         # Poetry dependencies
         poetry_deps = tool.get("poetry", {}).get("dependencies", {})
         if poetry_deps:
-            deps += _extract_dependencies_from_table(poetry_deps)
+            deps += extract_dependencies_from_table(poetry_deps)
 
         # Hatch dependencies
         hatch_deps = tool.get("hatch", {}).get("metadata", {}).get("dependencies", [])
@@ -118,60 +144,64 @@ class DependencyParser:
 
         return list(set(deps))
 
-    def _find_project_root(self) -> Optional[Path]:
-        start_dir = self.path.parent if self.path.is_file() else self.path
-        current_path = start_dir.resolve()
-        root = Path(current_path.anchor)
-
-        temp_path = current_path
-        while True:
-            if (
-                (temp_path / "pyproject.toml").exists()
-                or (temp_path / ".git").exists()
-                or (temp_path / "requirements.txt").exists()
-            ):
-                return temp_path
-            if temp_path == root:
-                break
-            temp_path = temp_path.parent
-        return None
+    def scan_for_imports(self, script: str) -> list[str]:
+        try:
+            tree = ast.parse(script)
+            imports = set()
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        imports.add(alias.name.split(".")[0])
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        imports.add(node.module.split(".")[0])
+            std_libs = set(sys.stdlib_module_names)
+            return sorted(list(imports - std_libs))
+        except SyntaxError:
+            return []
 
     def parse(self) -> DependenciesMetadata:
         if not self.path or not self.path.exists():
-            return DependenciesMetadata(dependencies=[], requirements_path=None)
+            return DependenciesMetadata(dependencies=[])
 
-        # Check for PEP 723 dependencies in Python scripts
-        if self.path.is_file() and self.path.suffix == ".py":
-            script = self.path.read_text(encoding="utf-8")
-            dependencies = self._parse_pep_723(script)
-            if dependencies:
-                return DependenciesMetadata(
-                    dependencies=dependencies, requirements_path=self.path
-                )
+        script = self.path.read_text(encoding="utf-8")
+        detected_imports = self.scan_for_imports(script)
 
-        # Find project root and search for dependency files
-        project_root = self._find_project_root()
-        search_dir = project_root or (
-            self.path.parent if self.path.is_file() else self.path
-        )
+        dependencies = self.parse_pep_723(script)
+        if dependencies:
+            return DependenciesMetadata(
+                dependencies=dependencies,
+                requirements_path=self.path,
+                detected_imports=detected_imports,
+            )
+
+        detected_imports = []
+        script = self.path.read_text(encoding="utf-8")
+        detected_imports = self.scan_for_imports(script)
+
+        search_dir = self.path.parent
 
         # Try pyproject.toml first
         pyproject_candidate = search_dir / "pyproject.toml"
         if pyproject_candidate.exists():
-            dependencies = self._parse_pyproject_toml(pyproject_candidate)
+            dependencies = self.parse_pyproject_toml(pyproject_candidate)
             return DependenciesMetadata(
-                dependencies=dependencies, requirements_path=pyproject_candidate
+                dependencies=dependencies,
+                requirements_path=pyproject_candidate,
+                detected_imports=detected_imports,
             )
 
         # Fallback to requirements.txt
         requirements_candidate = search_dir / "requirements.txt"
         if requirements_candidate.exists():
-            dependencies = self._parse_requirements_txt(requirements_candidate)
+            dependencies = self.parse_requirements_txt(requirements_candidate)
             return DependenciesMetadata(
-                dependencies=dependencies, requirements_path=requirements_candidate
+                dependencies=dependencies,
+                requirements_path=requirements_candidate,
+                detected_imports=detected_imports,
             )
 
-        return DependenciesMetadata(dependencies=[], requirements_path=None)
+        return DependenciesMetadata(dependencies=[], detected_imports=detected_imports)
 
 
 def parse_dependencies(_path: str | Path) -> DependenciesMetadata:
@@ -227,6 +257,29 @@ def prepare_nuitka_command(
     script_path: Path, python_version: str = PYTHON_VERSION, **nuitka_options
 ) -> tuple[list[str], DependenciesMetadata]:
     dependencies_metadata = parse_dependencies(script_path)
+    original_is_standalone = nuitka_options.get("--standalone", False)
+    original_is_onefile = nuitka_options.get("--onefile", False)
+    
+    if platform_name == "darwin":
+        if original_is_onefile or original_is_standalone:
+            nuitka_options.pop("--onefile", None)
+            nuitka_options.pop("--standalone", None)
+            nuitka_options["--mode"] = "app"
+
+    is_standalone = nuitka_options.get("--standalone", False)
+    is_onefile = nuitka_options.get("--onefile", False)
+    is_app_mode = nuitka_options.get("--mode") == "app"
+
+    if dependencies_metadata.detected_imports:
+        auto_plugins = apply_plugins(
+            dependencies_metadata.detected_imports,
+            is_standalone=is_standalone,
+            is_onefile=is_onefile,
+            is_app_mode=is_app_mode,
+        )
+        for plugin_flag, enabled in auto_plugins.items():
+            if plugin_flag not in nuitka_options:
+                nuitka_options[plugin_flag] = enabled
 
     _apply_smart_plugin_detection(dependencies_metadata, nuitka_options)
 
@@ -240,12 +293,15 @@ def prepare_nuitka_command(
         "--python-preference",
         "system",
         "run",
+        "--no-project",
         "--python",
         python_version,
         "--isolated",
-        "--with",
-        "nuitka",
     ]
+    if dependencies_metadata.dependencies:
+        for dependency in dependencies_metadata.dependencies:
+            cmd.extend(["--with", dependency])
+    cmd.extend(["--with", "nuitka", "-m", "nuitka"])
 
     for dep in dependencies_metadata.dependencies:
         cmd.extend(["--with", dep])
@@ -339,10 +395,60 @@ def create_nuitka_options_dict() -> dict[str, dict[str, dict]]:
     return options_dict
 
 
+def apply_plugins(
+    imports: list[str], is_standalone: bool = False, is_onefile: bool = False, is_app_mode: bool = False
+) -> dict[str, bool]:
+    plugins = {}
+
+    imports_str = " ".join(imports).lower()
+
+    qt_frameworks = {
+        "pyside6": ["pyside6"],
+        "pyside2": ["pyside2"],
+        "pyqt6": ["pyqt6"],
+        "pyqt5": ["pyqt5"],
+    }
+
+    if is_standalone or is_onefile or is_app_mode:
+        for plugin_name, patterns in qt_frameworks.items():
+            if any(pattern in imports_str for pattern in patterns):
+                plugins[f"--enable-plugin={plugin_name}"] = True
+
+    if any("tkinter" in imp.lower() for imp in imports):
+        plugins["--enable-plugin=tk-inter"] = True
+
+    if any("multiprocessing" in imp.lower() for imp in imports):
+        plugins["--enable-plugin=multiprocessing"] = True
+
+    return plugins
+
+
+def get_default_shell() -> str:
+    """Get the default shell command for the current platform."""
+    if platform_name == "windows":
+        return "cmd"
+        if shutil.which("pwsh"):
+            return "pwsh"
+        elif shutil.which("powershell"):
+            return "powershell"
+        else:
+            return "cmd"
+    else:
+        shell = os.environ.get("SHELL")
+        if shell and shutil.which(shell):
+            return shell
+        for shell in ["/bin/bash", "/bin/sh", "/usr/bin/bash"]:
+            if os.path.exists(shell):
+                return shell
+        return "sh"  # Final fallback
+
+
 __all__ = [
     "prepare_nuitka_command",
     "create_nuitka_options_dict",
     "DependenciesMetadata",
+    "get_default_shell",
+    "apply_plugins",
 ]
 
 

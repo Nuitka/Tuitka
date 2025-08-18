@@ -1,11 +1,12 @@
 SplashScreen {
     align: center middle;
+    background: $background;
 }
 
 #splash-dialog {
     width: 120;
     height: 35;
-    padding: 2;
+    padding: 3;
 }
 
 #splash-content {
@@ -13,20 +14,32 @@ SplashScreen {
     text-align: center;
     content-align: center middle;
     height: 1fr;
+    padding: 1;
 }
 
 #splash-art {
     text-align: center;
     height: 1fr;
+    color: $primary;
+    text-style: bold;
+}
+
+#splash-fact {
+    text-align: center;
+    height: auto;
+    margin: 1 0;
+    padding: 0 2;
 }
 
 #splash-links {
     text-align: center;
     height: auto;
+    margin: 1 0;
 }
 
 .continue-text {
     color: $text-muted;
     text-align: center;
     margin: 1 0 0 0;
+    text-style: italic;
 }

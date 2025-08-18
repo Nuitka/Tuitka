@@ -8,9 +8,9 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Static
 from tuitka.utils.platform import PYTHON_VERSION
 from textual_tty.widgets import TextualTerminal
-
-from tuitka.compilation.runners import create_runner
+from tuitka.utils import prepare_nuitka_command
 from tuitka.assets import STYLE_MODAL_COMPILATION
+import os
 
 
 class CompilationScreen(ModalScreen):
@@ -20,15 +20,24 @@ class CompilationScreen(ModalScreen):
     compilation_success: reactive[bool] = reactive(False, init=False)
 
     def __init__(self, python_version: str = PYTHON_VERSION, **nuitka_options) -> None:
+        self.cwd = Path.cwd()
+        os.chdir(self.app.script.parent)
         super().__init__()
         self.python_version = python_version
         self.nuitka_options = nuitka_options
         self.terminal = None
-        self.runner = None
+        self.nuitka_command = None
+        self.deps_metadata = None
 
     def compose(self) -> ComposeResult:
+        self.nuitka_command, self.deps_metadata = prepare_nuitka_command(
+            self.app.script, self.python_version, **self.nuitka_options
+        )
+
         with Vertical():
-            yield TextualTerminal(id="compilation_terminal")
+            yield TextualTerminal(
+                id="compilation_terminal", command=self.nuitka_command
+            )
             yield Static(
                 "Compilation in progress...",
                 id="status_label",
@@ -66,21 +75,13 @@ class CompilationScreen(ModalScreen):
 
     def on_mount(self) -> None:
         self.terminal = self.query_one("#compilation_terminal", TextualTerminal)
-        self.runner = create_runner(self.terminal)
-        self.set_timer(0.5, self.run_compilation)
 
     def cancel_compilation(self) -> None:
         if self.runner:
             self.runner.stop_compilation()
 
-    async def run_compilation(self) -> None:
-        script_path = Path(self.app.script)
-        if self.runner:
-            await self.runner.run_compilation(
-                script_path, self.python_version, **self.nuitka_options
-            )
-
     @on(TextualTerminal.ProcessExited)
     def on_process_exited(self, event: TextualTerminal.ProcessExited) -> None:
         self.compilation_success = event.exit_code == 0
         self.compilation_finished = True
+        os.chdir(self.cwd)
