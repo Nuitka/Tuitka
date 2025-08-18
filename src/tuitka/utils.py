@@ -214,15 +214,25 @@ def prepare_nuitka_command(
     script_path: Path, python_version: str = PYTHON_VERSION, **nuitka_options
 ) -> tuple[list[str], DependenciesMetadata]:
     dependencies_metadata = parse_dependencies(script_path)
+    original_is_standalone = nuitka_options.get("--standalone", False)
+    original_is_onefile = nuitka_options.get("--onefile", False)
+    
+    if platform_name == "darwin":
+        if original_is_onefile or original_is_standalone:
+            nuitka_options.pop("--onefile", None)
+            nuitka_options.pop("--standalone", None)
+            nuitka_options["--mode"] = "app"
 
     is_standalone = nuitka_options.get("--standalone", False)
     is_onefile = nuitka_options.get("--onefile", False)
+    is_app_mode = nuitka_options.get("--mode") == "app"
 
     if dependencies_metadata.detected_imports:
         auto_plugins = apply_plugins(
             dependencies_metadata.detected_imports,
             is_standalone=is_standalone,
             is_onefile=is_onefile,
+            is_app_mode=is_app_mode,
         )
         for plugin_flag, enabled in auto_plugins.items():
             if plugin_flag not in nuitka_options:
@@ -325,7 +335,7 @@ def create_nuitka_options_dict() -> dict[str, dict[str, dict]]:
 
 
 def apply_plugins(
-    imports: list[str], is_standalone: bool = False, is_onefile: bool = False
+    imports: list[str], is_standalone: bool = False, is_onefile: bool = False, is_app_mode: bool = False
 ) -> dict[str, bool]:
     plugins = {}
 
@@ -338,7 +348,7 @@ def apply_plugins(
         "pyqt5": ["pyqt5"],
     }
 
-    if is_standalone or is_onefile:
+    if is_standalone or is_onefile or is_app_mode:
         for plugin_name, patterns in qt_frameworks.items():
             if any(pattern in imports_str for pattern in patterns):
                 plugins[f"--enable-plugin={plugin_name}"] = True

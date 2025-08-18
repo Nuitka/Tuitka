@@ -221,7 +221,10 @@ class ScriptInputWidget(Container):
 
             python_version = PYTHON_VERSION
 
-            nuitka_options = {}
+            nuitka_options = {
+                "--assume-yes-for-downloads": True,
+                "--remove-output": True,
+            }
             if selected_preset.id == "onefile_preset":
                 nuitka_options["--onefile"] = True
             elif selected_preset.id == "standalone_preset":
