@@ -237,14 +237,11 @@ def prepare_nuitka_command(
         "--python",
         python_version,
         "--isolated",
-        "--with",
-        "nuitka",
     ]
     if dependencies_metadata.dependencies:
         for dependency in dependencies_metadata.dependencies:
             cmd.extend(["--with", dependency])
-
-    cmd.append("nuitka")
+    cmd.extend(["--with", "nuitka", "-m", "nuitka"])
 
     for flag, value in nuitka_options.items():
         if value is None:
